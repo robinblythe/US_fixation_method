@@ -1,0 +1,19 @@
+---
+title: Economic analysis of fixation method in a US Medicare population
+---
+The goal of this analysis is to replicate the results from Blythe et al (2020): Fixation method for hip stems, but in a US-based Medicare population. The three age groups will be similar: 65-75, 75-85, and 85+. Data will be comprised of US-based registry data for transition probabilities (revision, mortality, dislocation) and costs (prostheses, revision surgery, and operating theatre time), but otherwise use similar values from the original study for utilities and any other data points that have been updated in the literature.
+
+```{r, echo=FALSE}
+source("./0_Parameters.R")
+```
+
+The basic structure of this population-based model is as follows:
+1. Obtain the basic prevalence of each group: HA vs THA, cemented vs cementless, and by age, for 12 groups in total.
+2. Assume that each group enters the model at time 0, or when they first receive the prosthesis, and are assigned a cost for the procedure.
+3. Each group then proceeds through a 5 year span, iterating by year, with the costs and utilities of revision and dislocation varying by year. The stable population in each year corresponds to the surviving population who has not undergone a revision surgery. This study will differ from the original study in that we will attempt to incorporate a utility loss from dislocation and revision. Using existing data, the "baseline" payoff of costs and QALYs will be estimated.
+4. The model will repeat for two scenarios: assuming all patient groups receive cemented fixation, and assuming all patient groups receive cementless fixation.
+5. The differences between the outcomes will be represented by change in costs, change in QALYs.
+
+```{r}
+
+```
