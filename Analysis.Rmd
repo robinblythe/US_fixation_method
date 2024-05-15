@@ -4,10 +4,10 @@ title: Economic analysis of fixation method in a US Medicare population
 The goal of this analysis is to replicate the results from Blythe et al (2020): Fixation method for hip stems, but in a US-based Medicare population. The three age groups will be similar: 65-75, 75-85, and 85+. Data will be comprised of US-based registry data for transition probabilities (revision, mortality, dislocation) and costs (prostheses, revision surgery, and operating theatre time), but otherwise use similar values from the original study for utilities and any other data points that have been updated in the literature.
 
 ```{r}
-iter <- 10000 #Define number of iterations
-discount <- 0.03 #Define discount rate
-set.seed(888) #Set seed for reproducibility
-source("./0_Parameters.R") #Call parameters
+iter <- 10000 # Define number of iterations
+discount <- 0.03 # Define discount rate
+set.seed(888) # Set seed for reproducibility
+source("./0_Parameters.R") # Call parameters
 ```
 
 The basic structure of this population-based model is as follows:
@@ -18,5 +18,4 @@ The basic structure of this population-based model is as follows:
 5. The differences between the outcomes will be represented by change in costs, change in QALYs.
 
 ```{r}
-
 ```
