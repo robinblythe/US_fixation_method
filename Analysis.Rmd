@@ -1,21 +1,94 @@
 ---
-title: Economic analysis of fixation method in a US Medicare population
+title: Economic analysis of femoral stem fixation method in a US Medicare population
+  with hip fracture
+output:
+  html_document:
+    df_print: paged
 ---
-The goal of this analysis is to replicate the results from Blythe et al (2020): Fixation method for hip stems, but in a US-based Medicare population. The three age groups will be similar: 65-75, 75-85, and 85+. Data will be comprised of US-based registry data for transition probabilities (revision, mortality, dislocation) and costs (prostheses, revision surgery, and operating theatre time), but otherwise use similar values from the original study for utilities and any other data points that have been updated in the literature.
+The goal of this analysis is to replicate the results from Blythe et al (2020): Fixation method for hip stems following femoral neck fracture, but in a US-based Medicare population. The three age groups will be similar to the original study but bounded by Medicare inclusion: 65-74, 75-84, and 85+. Data will be comprised of US-based registry data for transition probabilities (revision, mortality) and costs where possible. Where new data is unobtainable, we will use values from the literature. The analysis is shown below.
 
-```{r}
-iter <- 10000 # Define number of iterations
-discount <- 0.03 # Define discount rate
-set.seed(888) # Set seed for reproducibility
-source("./0_Parameters.R") # Call parameters
+```{r, message = FALSE}
+options(scipen = 100, digits = 5)
+library(tidyverse)
+library(EnvStats)
+library(LaplacesDemon)
+library(patchwork)
+library(knitr)
+
+# Model inputs
+iter <- 10000 # define number of iterations
+discount <- 0.03 # define discount rate
+WTP <- 50000 # US WTP threshold
+set.seed(888) # repeatability
 ```
 
-The basic structure of this population-based model is as follows:
-1. Obtain the basic prevalence of each group: HA vs THA, cemented vs cementless, and by age, for 12 groups in total.
-2. Assume that each group enters the model at time 0, or when they first receive the prosthesis, and are assigned a cost for the procedure.
-3. Each group then proceeds through a 5 year span, iterating by year, with the costs and utilities of revision and dislocation varying by year. The stable population in each year corresponds to the surviving population who has not undergone a revision surgery. This study will differ from the original study in that we will attempt to incorporate a utility loss from dislocation and revision. Using existing data, the "baseline" payoff of costs and QALYs will be estimated.
-4. The model will repeat for two scenarios: assuming all patient groups receive cemented fixation, and assuming all patient groups receive cementless fixation.
-5. The differences between the outcomes will be represented by change in costs, change in QALYs.
+The basic structure of this population-based model is as follows:  
+1. Obtain the basic prevalence of each group: HA vs THA, cemented vs cementless, and by age, for 12 groups in total. All patients in this model are assumed to be receiving their new hips following a femoral neck fracture.  
+2. Assume that each group enters the model at time 0, or when they first receive the prosthesis, and are assigned a cost for the procedure.  
+3. Each group then proceeds through a 5 year span, iterating by year, with the costs and utilities of stable states, revisions and dislocations varying by year. The stable population in each year corresponds to the surviving population who has not undergone a revision surgery or closed reduction of dislocation.  
+4. The differences between the baseline population and a default strategy of cementing or not cementing for each age group will be calculated by assuming that all patients receive a particular fixation type for femoral stem, rather than using the existing prevalence of each procedure.  
 
 ```{r}
+#Call parameters and functions required to populate models
+source("./0_Parameters_US.R")
+source("./1_Model_function.R")
+
+# Run models for each age group and merge them together into one long dataframe
+source("./2_Age_65_74.R")
+source("./3_Age_75_84.R")
+source("./4_Age_85_plus.R")
+
+models <- rbind(
+  model_65_74,
+  model_75_84,
+  model_85_plus
+)
+
+kable(head(models), format.args = list(big.mark = ","), caption = "Extract of simulation model results")
+```
+
+Results from the models are calculated as the mean difference between strategies compared to baseline. We can also see how many of these simulations are cost-saving (costs < 0), QALY-gaining (QALYs > 0) and cost-effective ()
+
+```{r}
+# Analysis summary
+analysis <- models |>
+  group_by(Strategy, Prosthesis, Age) |>
+  summarise(Total_Cost_5y = mean(Costs),
+            Total_QALY_5y = mean(QALYs),
+            Pct_Cost_Saving = sum(Costs < 0)/iter,
+            Pct_QALY_Gaining = sum(QALYs > 0)/iter,
+            NMB = sum(mean(QALYs) * WTP - mean(Costs)),
+            Pct_Cost_Effective = sum((QALYs * WTP - Costs) > 0)/iter)
+kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
+```
+
+Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
+
+```{r}
+p_ha <- models |> filter(Prosthesis == "Hemiarthroplasty") |> ggplot()
+p_tha <- models |> filter(Prosthesis == "Total hip arthroplasty") |> ggplot()
+
+p_ha +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 50000) +
+  facet_wrap(vars(Age), ncol = 1) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank()) +
+  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
+  labs(x = "QALYs",
+       y = "Costs ($millions)",
+       title = "Hemiarthroplasty") +
+  p_tha +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 50000) +
+  facet_wrap(vars(Age), ncol = 1) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank()) +
+  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
+  labs(x = "QALYs",
+       y = "Costs ($millions)",
+       title = "Total hip arthroplasty") +
+  plot_annotation(title = "Cost-effectiveness of setting default stem fixation") +
+  plot_layout(guides = "collect") &
+  theme(legend.position = "bottom")
 ```
