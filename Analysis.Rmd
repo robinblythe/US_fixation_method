@@ -60,13 +60,26 @@ analysis <- models |>
     Pct_QALY_Gaining = sum(QALYs > 0) / iter,
     NMB = sum(mean(QALYs) * WTP - mean(Costs)),
     Pct_Cost_Effective = sum((QALYs * WTP - Costs) > 0) / iter
-  )
+  ) |>
+  mutate(Total_Cost_5y = Total_Cost_5y * (1 + discount)^5) # Convert $2019 to $2024
+
+total <- analysis |>
+  filter(Strategy == "All patients receive cemented fixation") |>
+  summarise(Cost = sum(Total_Cost_5y),
+            QALY = sum(Total_QALY_5y))
+
+print(paste0("The overall annual savings to Medicare of switching to cemented fixation are $",
+             ceiling(sum(total$Cost)), " and ",
+             ceiling(sum(total$QALY)), " QALYs."))
+
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 ```
 
 Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
 
-```{r}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+p_all <- models |>
+  ggplot()
 p_ha <- models |>
   filter(Prosthesis == "Hemiarthroplasty") |>
   ggplot()
@@ -74,13 +87,32 @@ p_tha <- models |>
   filter(Prosthesis == "Total hip arthroplasty") |>
   ggplot()
 
-p_ha +
+p_all +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
+  geom_abline(intercept = 0, slope = 50000) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank()) +
+  scale_x_continuous(limits = c(-2000, 2000),
+                     breaks = seq(-2000, 2000, 1000)) +
+  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+                     limits = c(-20000000, 30000000),
+                     breaks = seq(-20000000, 30000000, 10000000)) +
+  labs(
+    x = "QALYs",
+    y = "Costs ($millions)",
+    title = "All procedures"
+  ) +
+  p_ha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
   geom_abline(intercept = 0, slope = 50000) +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
-  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
+  scale_x_continuous(limits = c(-2000, 2000),
+                     breaks = seq(-2000, 2000, 1000)) +
+  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+                     limits = c(-20000000, 30000000),
+                     breaks = seq(-20000000, 30000000, 10000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -92,7 +124,11 @@ p_ha +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
-  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
+  scale_x_continuous(limits = c(-2000, 2000),
+                     breaks = seq(-2000, 2000, 1000)) +
+  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+                     limits = c(-20000000, 30000000),
+                     breaks = seq(-20000000, 30000000, 10000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -102,3 +138,110 @@ p_ha +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 ```
+
+Some notes for your abstract:
+One of our primary motivations is to highlight the false economy of saving 8 minutes for a primary procedure. In our all hips are cemented scenario, this is how that might look:
+
+```{r, echo = FALSE, message = FALSE}
+baseline_65 <- list(
+  HA_cemented_65 = simulator(n = prev$n_65_HA_cemented, agegroup = "age_65", modelgroup = "HA_cemented"),
+  HA_cementless_65 = simulator(n = prev$n_65_HA_cementless, agegroup = "age_65", modelgroup = "HA_cementless"),
+  THA_cemented_65 = simulator(n = prev$n_65_THA_cemented, agegroup = "age_65", modelgroup = "THA_cemented"),
+  THA_cementless_65 = simulator(n = prev$n_65_THA_cementless, agegroup = "age_65", modelgroup = "THA_cementless")
+)
+baseline_65 <- do.call(rbind, baseline_65)
+
+cemented_65 <- list(
+  HA = simulator(n = (prev$n_65_HA_cemented + prev$n_65_HA_cementless), agegroup = "age_65", modelgroup = "HA_cemented"),
+  THA = simulator(n = (prev$n_65_THA_cemented + prev$n_65_THA_cementless), agegroup = "age_65", modelgroup = "THA_cemented")
+)
+cemented_65 <- do.call(rbind, cemented_65)
+
+baseline_75 <- list(
+  HA_cemented_75 = simulator(n = prev$n_75_HA_cemented, agegroup = "age_75", modelgroup = "HA_cemented"),
+  HA_cementless_75 = simulator(n = prev$n_75_HA_cementless, agegroup = "age_75", modelgroup = "HA_cementless"),
+  THA_cemented_75 = simulator(n = prev$n_75_THA_cemented, agegroup = "age_75", modelgroup = "THA_cemented"),
+  THA_cementless_75 = simulator(n = prev$n_75_THA_cementless, agegroup = "age_75", modelgroup = "THA_cementless")
+)
+baseline_75 <- do.call(rbind, baseline_75)
+
+cemented_75 <- list(
+  HA = simulator(n = (prev$n_75_HA_cemented + prev$n_75_HA_cementless), agegroup = "age_75", modelgroup = "HA_cemented"),
+  THA = simulator(n = (prev$n_75_THA_cemented + prev$n_75_THA_cementless), agegroup = "age_75", modelgroup = "THA_cemented")
+)
+cemented_75 <- do.call(rbind, cemented_75)
+
+baseline_85 <- list(
+  HA_cemented_85 = simulator(n = prev$n_85_HA_cemented, agegroup = "age_85", modelgroup = "HA_cemented"),
+  HA_cementless_85 = simulator(n = prev$n_85_HA_cementless, agegroup = "age_85", modelgroup = "HA_cementless"),
+  THA_cemented_85 = simulator(n = prev$n_85_THA_cemented, agegroup = "age_85", modelgroup = "THA_cemented"),
+  THA_cementless_85 = simulator(n = prev$n_85_THA_cementless, agegroup = "age_85", modelgroup = "THA_cementless")
+)
+baseline_85 <- do.call(rbind, baseline_85)
+
+cemented_85 <- list(
+  HA = simulator(n = (prev$n_85_HA_cemented + prev$n_85_HA_cementless), agegroup = "age_85", modelgroup = "HA_cemented"),
+  THA = simulator(n = (prev$n_85_THA_cemented + prev$n_85_THA_cementless), agegroup = "age_85", modelgroup = "THA_cemented")
+)
+cemented_85 <- do.call(rbind, cemented_85)
+
+baseline <- do.call(rbind, list(baseline_65, baseline_75, baseline_85))
+cemented <- do.call(rbind, list(cemented_65, cemented_75, cemented_85))
+
+revisions_baseline <- baseline |>
+  group_by(Surgery) |>
+  summarise(Revisions = sum(mean(Revision_year1),
+                            mean(Revision_year2),
+                            mean(Revision_year3),
+                            mean(Revision_year4),
+                            mean(Revision_year5))) |>
+  summarise(Total = sum(Revisions)) |>
+  pull()
+
+dislocations_baseline <- baseline |>
+  group_by(Surgery) |>
+  summarise(Dislocations = sum(mean(Dislocation_year1),
+                            mean(Dislocation_year2),
+                            mean(Dislocation_year3),
+                            mean(Dislocation_year4),
+                            mean(Dislocation_year5))) |>
+  summarise(Total = sum(Dislocations)) |>
+  pull()
+
+revisions_cemented <- cemented |>
+  group_by(Surgery) |>
+  summarise(Revisions = sum(mean(Revision_year1),
+                            mean(Revision_year2),
+                            mean(Revision_year3),
+                            mean(Revision_year4),
+                            mean(Revision_year5))) |>
+  summarise(Total = sum(Revisions)) |>
+  pull()
+
+dislocations_cemented <- cemented |>
+  group_by(Surgery) |>
+  summarise(Dislocations = sum(mean(Dislocation_year1),
+                            mean(Dislocation_year2),
+                            mean(Dislocation_year3),
+                            mean(Dislocation_year4),
+                            mean(Dislocation_year5))) |>
+  summarise(Total = sum(Dislocations)) |>
+  pull()
+
+extra_minutes <- sum(prev$n_65_HA_cementless, prev$n_65_THA_cementless,
+                     prev$n_75_HA_cementless, prev$n_75_THA_cementless,
+                     prev$n_85_HA_cementless, prev$n_85_THA_cementless) * mean(rgamma(iter, shape = 32.478, scale = 0.223))/60
+
+print(paste0("Cementing requires an additional ", ceiling(extra_minutes), " hours per year (nationally) of operating theater time."))
+print("This is the time cost to surgeons of applying cement. The tradeoff is that this leads to less revisions and dislocations:")
+print(paste0(ceiling(revisions_baseline - revisions_cemented), " revisions avoided over 5 years. "))
+print(paste0(ceiling(dislocations_baseline - dislocations_cemented), " dislocations avoided over 5 years."))
+
+
+```
+
+
+
+
+
+

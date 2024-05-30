@@ -25,6 +25,25 @@ type_surg <- rdirichlet(iter, c(0.55, 0.24, 0.21))
 # All procedure costs are now cost/minute * number of minutes + add-ons (e.g. cement)
 cost_min_OT <- rgamma(iter, shape = 2.030470639, scale = 22.674546047) / (1 + discount)^3
 
+# Revision surgery cost from https://doi.org/10.1016/j.arth.2023.04.050
+# Recreate cost distribution
+base_cost_revisions <- c(rep(17686, 417), 
+                         rep(11125, 145), 
+                         rep(9066, 58), 
+                         rep(16553, 53), 
+                         rep(18374, 30), 
+                         rep(8677, 28), 
+                         rep(8427, 26), 
+                         rep(12743, 11),
+                         rep(13375, 7),
+                         rep(10710, 6),
+                         rep(10474, 6),
+                         rep(13244, 3),
+                         9745,
+                         15360, 
+                         10427)
+
+
 generic <- list(
 
   # Procedure costs = cost per minute times number of minutes. Mean duration so use rnorm
@@ -37,22 +56,25 @@ generic <- list(
     cost_min_OT + # Cost per minute
     (181 * 2 + runif(iter, min = 85, max = 115)) / (1 + discount)^5, # 2024 cost of cementing products, 2 packs antibiotic cement plus mixing tower
 
-  cost_cementless = (type_surg[, 2] * 53 + type_surg[, 3] * 53 * 2) / (1 + discount)^5, # cost of cementless screws, 2024
+  cost_cementless = (type_surg[, 2] * 53 + type_surg[, 3] * 53 * 2) / (1 + discount)^1, # cost of cementless screws, 2024
 
   # HA is a weighted average, 65% bipolar, 35% monopolar
-  cost_HA_prosthesis = (0.65 * rtri(iter, min = 2449, mode = 2868, max = 3079) + # Bipolar
-    0.35 * rtri(iter, min = 1211, mode = 1760, max = 2544)) / (1 + discount)^5, # Monopolar
+  cost_HA_prosthesis = (0.65 * rtri(iter, min = 1715, mode = 2385, max = 3066) + # Bipolar
+    0.35 * rtri(iter, min = 1326, mode = 1658, max = 1991)) / (1 + discount)^1, # Monopolar
 
   # THA assumes ceramic head, same price for cemented and cementless prostheses
-  cost_THA_prosthesis = rtri(iter, min = 4537, mode = 4757, max = 4933) / (1 + discount)^5,
+  cost_THA_prosthesis = list(
+    cemented = rtri(iter, min = 3965, mode = 4388, max = 4811),
+    cementless = rtri(iter, min = 4003, mode = 4776, max = 6375) / (1 + discount)^3),
 
-  # Revision surgery cost
-  cost_revision_HA = cost_min_OT * rnorm(iter, 115.20, 1.532),
-  cost_revision_THA = cost_min_OT * rnorm(iter, 123.88, 5.063),
+  
+  # Taking the top 8 indications leads to a median of 
+  cost_revision = rnorm(iter, mean = mean(base_cost_revisions), sd = sd(base_cost_revisions)/sqrt(length(base_cost_revisions))),
+
 
   # Dislocation outcomes from https://doi.org/10.1016/j.arth.2018.05.015
   # Turning costs from normal to gamma using https://doi.org/10.31219/osf.io/zf62e
-  # Study is from 2018 so bring it up to $2019
+  # Study data is from 2018 so bring it up to $2019
   cost_dislocation_1year = rgamma(iter, shape = 9.55337, scale = 1819.09726) * (1 + discount),
 
   # Dislocation rates from original study
@@ -298,11 +320,11 @@ costs <- list(
   THA_cemented =
     generic$cost_THA +
       generic$cost_cementing +
-      generic$cost_THA_prosthesis,
+      generic$cost_THA_prosthesis$cemented,
   THA_cementless =
     generic$cost_THA +
       generic$cost_cementless +
-      generic$cost_THA_prosthesis,
+      generic$cost_THA_prosthesis$cementless,
 
 
   # Dislocations
@@ -318,72 +340,72 @@ costs <- list(
   # Assume revision leads to same surgery type as initial procedure
   cost_revision = list(
     HA_cemented = list(
-      year1 = (generic$cost_revision_HA +
+      year1 = (generic$cost_revision +
         generic$cost_cementing +
         generic$cost_HA_prosthesis),
-      year2 = (generic$cost_revision_HA +
+      year2 = (generic$cost_revision +
         generic$cost_cementing +
         generic$cost_HA_prosthesis) / (1 + discount),
-      year3 = (generic$cost_revision_HA +
+      year3 = (generic$cost_revision +
         generic$cost_cementing +
         generic$cost_HA_prosthesis) / (1 + discount)^2,
-      year4 = (generic$cost_revision_HA +
+      year4 = (generic$cost_revision +
         generic$cost_cementing +
         generic$cost_HA_prosthesis) / (1 + discount)^3,
-      year5 = (generic$cost_revision_HA +
+      year5 = (generic$cost_revision +
         generic$cost_cementing +
         generic$cost_HA_prosthesis) / (1 + discount)^4
     ),
     HA_cementless = list(
-      year1 = (generic$cost_revision_HA +
+      year1 = (generic$cost_revision +
         generic$cost_cementless +
         generic$cost_HA_prosthesis),
-      year2 = (generic$cost_revision_HA +
+      year2 = (generic$cost_revision +
         generic$cost_cementless +
         generic$cost_HA_prosthesis) / (1 + discount),
-      year3 = (generic$cost_revision_HA +
+      year3 = (generic$cost_revision +
         generic$cost_cementless +
         generic$cost_HA_prosthesis) / (1 + discount)^2,
-      year4 = (generic$cost_revision_HA +
+      year4 = (generic$cost_revision +
         generic$cost_cementless +
         generic$cost_HA_prosthesis) / (1 + discount)^3,
-      year5 = (generic$cost_revision_HA +
+      year5 = (generic$cost_revision +
         generic$cost_cementless +
         generic$cost_HA_prosthesis) / (1 + discount)^4
     ),
     THA_cemented = list(
-      year1 = (generic$cost_revision_THA +
+      year1 = (generic$cost_revision +
         generic$cost_cementing +
-        generic$cost_THA_prosthesis),
-      year2 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cemented),
+      year2 = (generic$cost_revision +
         generic$cost_cementing +
-        generic$cost_THA_prosthesis) / (1 + discount),
-      year3 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cemented) / (1 + discount),
+      year3 = (generic$cost_revision +
         generic$cost_cementing +
-        generic$cost_THA_prosthesis) / (1 + discount)^2,
-      year4 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cemented) / (1 + discount)^2,
+      year4 = (generic$cost_revision +
         generic$cost_cementing +
-        generic$cost_THA_prosthesis) / (1 + discount)^3,
-      year5 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cemented) / (1 + discount)^3,
+      year5 = (generic$cost_revision +
         generic$cost_cementing +
-        generic$cost_THA_prosthesis) / (1 + discount)^4
+        generic$cost_THA_prosthesis$cemented) / (1 + discount)^4
     ),
     THA_cementless = list(
-      year1 = (generic$cost_revision_THA +
+      year1 = (generic$cost_revision +
         generic$cost_cementless +
-        generic$cost_THA_prosthesis),
-      year2 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cementless),
+      year2 = (generic$cost_revision +
         generic$cost_cementless +
-        generic$cost_THA_prosthesis) / (1 + discount),
-      year3 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cementless) / (1 + discount),
+      year3 = (generic$cost_revision +
         generic$cost_cementless +
-        generic$cost_THA_prosthesis) / (1 + discount)^2,
-      year4 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cementless) / (1 + discount)^2,
+      year4 = (generic$cost_revision +
         generic$cost_cementless +
-        generic$cost_THA_prosthesis) / (1 + discount)^3,
-      year5 = (generic$cost_revision_THA +
+        generic$cost_THA_prosthesis$cementless) / (1 + discount)^3,
+      year5 = (generic$cost_revision +
         generic$cost_cementless +
-        generic$cost_THA_prosthesis) / (1 + discount)^4
+        generic$cost_THA_prosthesis$cementless) / (1 + discount)^4
     )
   )
 )
