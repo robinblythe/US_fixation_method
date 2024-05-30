@@ -23,11 +23,12 @@ simulator <- function(n, agegroup, modelgroup) {
         # Stable = sum of last year's stable, dislocations, and revisions,
         # MINUS this year's dislocations, revisions, and deaths
         Stable = get(paste0("Stable_year", prev_year)) +
-        get(paste0("Dislocation_year", prev_year)) +
-        get(paste0("Revision_year", prev_year)) -
-        Dislocation -
-        Revision -
-        Death) |>
+          get(paste0("Dislocation_year", prev_year)) +
+          get(paste0("Revision_year", prev_year)) -
+          Dislocation -
+          Revision -
+          Death
+      ) |>
       mutate(
         # Costs are cumulative
         # Equal to last year's costs plus this year's dislocations and revisions
@@ -35,7 +36,7 @@ simulator <- function(n, agegroup, modelgroup) {
           get(paste0("Costs_year", prev_year)) +
             Dislocation * costs$cost_dislocation[[paste0("year", year)]] +
             Revision * costs$cost_revision[[modelgroup]][[paste0("year", year)]],
-        
+
         # QALYs are cumulative
         # Equal to last year's QALYs plus this year's stable, dislocations, and revisions
         QALYs =
@@ -59,14 +60,15 @@ simulator <- function(n, agegroup, modelgroup) {
   ) |>
     mutate(
       # Stable at the end of year 1 = surgeries minus dislocations, revisions, and deaths
-      Stable_year1 = n - Dislocation_year1 - Revision_year1 - Death_year1) |>
+      Stable_year1 = n - Dislocation_year1 - Revision_year1 - Death_year1
+    ) |>
     mutate(
       # Costs at the end of year 1 = cost of surgery + costs of dislocations and revisions
       Costs_year1 =
         Cost_surgery +
           Dislocation_year1 * costs$cost_dislocation$year1 +
           Revision_year1 * costs$cost_revision[[modelgroup]]$year1,
-      
+
       # QALYs at the end of year 1 = QALYs from stable state, dislocations, and revisions (no QALY for death)
       QALYs_year1 =
         Stable_year1 * utilities[[modelgroup]]$year1 +
@@ -118,22 +120,20 @@ simulator <- function(n, agegroup, modelgroup) {
 
 # Function for getting costs, QALYs from each simulator
 # Takes agegroup (65, 75, 85), arthroplasty (HA, THA), fixation (cemented, cementless)
-modeller <- function(agegroup, arthroplasty, fixation){
+modeller <- function(agegroup, arthroplasty, fixation) {
   tibble(
-    Costs = 
+    Costs =
       get(paste(fixation, agegroup, sep = "_"))[[arthroplasty]]$Costs_year5 -
-      (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$Costs_year5 +
-         (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cementless_", agegroup)]]$Costs_year5)),
-    
-    QALYs = 
+        (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$Costs_year5 +
+          (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cementless_", agegroup)]]$Costs_year5)),
+    QALYs =
       get(paste(fixation, agegroup, sep = "_"))[[arthroplasty]]$QALYs_year5 -
-      (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$QALYs_year5 +
-         (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cementless_", agegroup)]]$QALYs_year5)),
-    
+        (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$QALYs_year5 +
+          (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cementless_", agegroup)]]$QALYs_year5)),
     Strategy = paste0("All patients receive ", fixation, " fixation"),
     Prosthesis = ifelse(arthroplasty == "HA", "Hemiarthroplasty", "Total hip arthroplasty"),
     Age = ifelse(agegroup == 65, "65 to 74",
-                 ifelse(agegroup == 75, "75 to 84", "85 and over"))
+      ifelse(agegroup == 75, "75 to 84", "85 and over")
+    )
   )
 }
-

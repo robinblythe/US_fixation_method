@@ -1,4 +1,4 @@
-#Simulator can take:
+# Simulator can take:
 ## agegroups c("age_65", "age_75", or "age_85") and
 ## modelgroup c("HA_cemented", "HA_cementless", "THA_cemented", "THA_cementless)
 
@@ -23,7 +23,7 @@ cementless_75 <- list(
   THA = simulator(n = (prev$n_75_THA_cemented + prev$n_75_THA_cementless), agegroup = "age_75", modelgroup = "THA_cementless")
 )
 
-#Obtain differences between model and baseline for each group; store in tibble
+# Obtain differences between model and baseline for each group; store in tibble
 model_75_84 <- rbind(
   modeller(agegroup = 75, arthroplasty = "HA", fixation = "cemented"),
   modeller(agegroup = 75, arthroplasty = "HA", fixation = "cementless"),

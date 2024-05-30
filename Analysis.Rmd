@@ -29,7 +29,7 @@ The basic structure of this population-based model is as follows:
 4. The differences between the baseline population and a default strategy of cementing or not cementing for each age group will be calculated by assuming that all patients receive a particular fixation type for femoral stem, rather than using the existing prevalence of each procedure.  
 
 ```{r}
-#Call parameters and functions required to populate models
+# Call parameters and functions required to populate models
 source("./0_Parameters_US.R")
 source("./1_Model_function.R")
 
@@ -53,20 +53,26 @@ Results from the models are calculated as the mean difference between strategies
 # Analysis summary
 analysis <- models |>
   group_by(Strategy, Prosthesis, Age) |>
-  summarise(Total_Cost_5y = mean(Costs),
-            Total_QALY_5y = mean(QALYs),
-            Pct_Cost_Saving = sum(Costs < 0)/iter,
-            Pct_QALY_Gaining = sum(QALYs > 0)/iter,
-            NMB = sum(mean(QALYs) * WTP - mean(Costs)),
-            Pct_Cost_Effective = sum((QALYs * WTP - Costs) > 0)/iter)
+  summarise(
+    Total_Cost_5y = mean(Costs),
+    Total_QALY_5y = mean(QALYs),
+    Pct_Cost_Saving = sum(Costs < 0) / iter,
+    Pct_QALY_Gaining = sum(QALYs > 0) / iter,
+    NMB = sum(mean(QALYs) * WTP - mean(Costs)),
+    Pct_Cost_Effective = sum((QALYs * WTP - Costs) > 0) / iter
+  )
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 ```
 
 Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
 
 ```{r}
-p_ha <- models |> filter(Prosthesis == "Hemiarthroplasty") |> ggplot()
-p_tha <- models |> filter(Prosthesis == "Total hip arthroplasty") |> ggplot()
+p_ha <- models |>
+  filter(Prosthesis == "Hemiarthroplasty") |>
+  ggplot()
+p_tha <- models |>
+  filter(Prosthesis == "Total hip arthroplasty") |>
+  ggplot()
 
 p_ha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
@@ -75,9 +81,11 @@ p_ha +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
-  labs(x = "QALYs",
-       y = "Costs ($millions)",
-       title = "Hemiarthroplasty") +
+  labs(
+    x = "QALYs",
+    y = "Costs ($millions)",
+    title = "Hemiarthroplasty"
+  ) +
   p_tha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
   geom_abline(intercept = 0, slope = 50000) +
@@ -85,9 +93,11 @@ p_ha +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6)) +
-  labs(x = "QALYs",
-       y = "Costs ($millions)",
-       title = "Total hip arthroplasty") +
+  labs(
+    x = "QALYs",
+    y = "Costs ($millions)",
+    title = "Total hip arthroplasty"
+  ) +
   plot_annotation(title = "Cost-effectiveness of setting default stem fixation") +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
