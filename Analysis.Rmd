@@ -87,16 +87,23 @@ p_tha <- models |>
   filter(Prosthesis == "Total hip arthroplasty") |>
   ggplot()
 
+
 p_all +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
-  geom_abline(intercept = 0, slope = 50000) +
+  annotate("text", x = -Inf, y = Inf, label = "A") +
+  annotate("text", x = Inf, y = Inf, label = "B") +
+  annotate("text", x = -Inf, y = -Inf, label = "C") +
+  annotate("text", x = Inf, y = -Inf, label = "D") +
+  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_x_continuous(limits = c(-2000, 2000),
                      breaks = seq(-2000, 2000, 1000)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-20000000, 30000000),
-                     breaks = seq(-20000000, 30000000, 10000000)) +
+                     limits = c(-30000000, 30000000),
+                     breaks = seq(-30000000, 30000000, 15000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -104,15 +111,17 @@ p_all +
   ) +
   p_ha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
-  geom_abline(intercept = 0, slope = 50000) +
+  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_x_continuous(limits = c(-2000, 2000),
                      breaks = seq(-2000, 2000, 1000)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-20000000, 30000000),
-                     breaks = seq(-20000000, 30000000, 10000000)) +
+                     limits = c(-30000000, 30000000),
+                     breaks = seq(-30000000, 30000000, 15000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -120,15 +129,17 @@ p_all +
   ) +
   p_tha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
-  geom_abline(intercept = 0, slope = 50000) +
+  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
-  scale_x_continuous(limits = c(-2000, 2000),
-                     breaks = seq(-2000, 2000, 1000)) +
+  scale_x_continuous(limits = c(-200, 200),
+                     breaks = seq(-200, 200, 100)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-20000000, 30000000),
-                     breaks = seq(-20000000, 30000000, 10000000)) +
+                     limits = c(-10000000, 10000000),
+                     breaks = seq(-10000000, 10000000, 5000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -137,6 +148,8 @@ p_all +
   plot_annotation(title = "Cost-effectiveness of setting default stem fixation") +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
+
+ggsave("./results_graphic.png", height = 6, width = 8)
 ```
 
 Some notes for your abstract:
