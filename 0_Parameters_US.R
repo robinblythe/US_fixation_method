@@ -23,7 +23,7 @@ type_surg <- rdirichlet(iter, c(0.55, 0.24, 0.21))
 
 # Cost per minute OT time in the USA, updated 2022 -> 2019 from https://doi.org/10.55576/job.v2i4.23
 # All procedure costs are now cost/minute * number of minutes + add-ons (e.g. cement)
-cost_min_OT <- rgamma(iter, shape = 2.030470639, scale = 22.674546047) / (1 + discount)^3
+cost_min_OT <- rgamma(iter, shape = 2.030, scale = 22.675) / (1 + discount)^3
 
 # Revision surgery cost from https://doi.org/10.1016/j.arth.2023.04.050
 # Recreate cost distribution

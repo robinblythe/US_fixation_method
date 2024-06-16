@@ -79,6 +79,11 @@ Looking at the CEA plots, it seems fairly clear that the choice to cement is cos
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 p_all <- models |>
+  group_by(Strategy, Prosthesis, Age) |>
+  mutate(sim_no = row_number()) |>
+  group_by(sim_no, Strategy) |>
+  summarise(Costs = sum(Costs),
+            QALYs = sum(QALYs)) |>
   ggplot()
 p_ha <- models |>
   filter(Prosthesis == "Hemiarthroplasty") |>
@@ -87,36 +92,44 @@ p_tha <- models |>
   filter(Prosthesis == "Total hip arthroplasty") |>
   ggplot()
 
+colours <- c("#999999", "#8B0000")
 
 p_all +
-  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
-  annotate("text", x = -Inf, y = Inf, label = "A") +
-  annotate("text", x = Inf, y = Inf, label = "B") +
-  annotate("text", x = -Inf, y = -Inf, label = "C") +
-  annotate("text", x = Inf, y = -Inf, label = "D") +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
+  annotate("text", x = -5800, y = 60000000, label = "A") +
+  annotate("text", x = 5800, y = 60000000, label = "B") +
+  annotate("text", x = -5800, y = -60000000, label = "C") +
+  annotate("text", x = 5800, y = -60000000, label = "D") +
   geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
-  scale_x_continuous(limits = c(-2000, 2000),
-                     breaks = seq(-2000, 2000, 1000)) +
+  scale_colour_manual(values = colours) +
+  scale_x_continuous(limits = c(-6000, 6000),
+                     breaks = seq(-6000, 6000, 3000)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-30000000, 30000000),
-                     breaks = seq(-30000000, 30000000, 15000000)) +
+                     limits = c(-60000000, 60000000),
+                     breaks = seq(-60000000, 60000000, 15000000)) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
     title = "All procedures"
   ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   p_ha +
-  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
+  annotate("text", x = -1800, y = 28000000, label = "A") +
+  annotate("text", x = 1800, y = 28000000, label = "B") +
+  annotate("text", x = -1800, y = -28000000, label = "C") +
+  annotate("text", x = 1800, y = -28000000, label = "D") +
   geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
+  scale_colour_manual(values = colours) +
   scale_x_continuous(limits = c(-2000, 2000),
                      breaks = seq(-2000, 2000, 1000)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
@@ -127,16 +140,22 @@ p_all +
     y = "Costs ($millions)",
     title = "Hemiarthroplasty"
   ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   p_tha +
-  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.2) +
+  geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
+  annotate("text", x = -140, y = 9000000, label = "A") +
+  annotate("text", x = 140, y = 9000000, label = "B") +
+  annotate("text", x = -140, y = -9000000, label = "C") +
+  annotate("text", x = 140, y = -9000000, label = "D") +
   geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
-  scale_x_continuous(limits = c(-200, 200),
-                     breaks = seq(-200, 200, 100)) +
+  scale_colour_manual(values = colours) +
+  scale_x_continuous(limits = c(-150, 150),
+                     breaks = seq(-150, 150, 75)) +
   scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
                      limits = c(-10000000, 10000000),
                      breaks = seq(-10000000, 10000000, 5000000)) +
@@ -145,6 +164,7 @@ p_all +
     y = "Costs ($millions)",
     title = "Total hip arthroplasty"
   ) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   plot_annotation(title = "Cost-effectiveness of setting default stem fixation") +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
