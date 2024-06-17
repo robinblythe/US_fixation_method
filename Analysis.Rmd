@@ -16,9 +16,9 @@ library(patchwork)
 library(knitr)
 
 # Model inputs
-iter <- 10000 # define number of iterations
+iter <- 100000 # define number of iterations
 discount <- 0.03 # define discount rate
-WTP <- 50000 # US WTP threshold
+WTP <- 44771 # US WTP threshold
 set.seed(888) # repeatability
 ```
 
