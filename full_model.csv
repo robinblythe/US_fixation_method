@@ -1,13 +1,13 @@
 "","Strategy","Prosthesis","Age","Total_Cost_5y","Total_QALY_5y","Pct_Cost_Saving","Pct_QALY_Gaining","NMB","Pct_Cost_Effective"
-"1","All patients receive cemented fixation","Hemiarthroplasty","65 to 74",-2451489.11005671,231.789121428496,0.9407,0.9353,13704132.1125818,0.9585
-"2","All patients receive cemented fixation","Hemiarthroplasty","75 to 84",-5384776.4782918,493.896454289181,0.941,0.935,29339778.2065788,0.9594
-"3","All patients receive cemented fixation","Hemiarthroplasty","85 and over",-5598863.42129637,529.063674911541,0.9307,0.9353,31282812.5153545,0.9581
-"4","All patients receive cemented fixation","Total hip arthroplasty","65 to 74",-960913.52391014,54.0789741250118,0.8897,0.9989,3532841.15300902,0.9979
-"5","All patients receive cemented fixation","Total hip arthroplasty","75 to 84",-743668.20340075,42.9108526281359,0.8756,0.9993,2787037.35632747,0.9978
-"6","All patients receive cemented fixation","Total hip arthroplasty","85 and over",-376148.66900711,18.5255403142007,0.8927,0.9984,1250746.16182998,0.9975
-"7","All patients receive cementless fixation","Hemiarthroplasty","65 to 74",1422257.40125914,-143.388094040563,0.0725,0.0688,-8396256.43000966,0.0472
-"8","All patients receive cementless fixation","Hemiarthroplasty","75 to 84",4353910.49403956,-405.819120777158,0.064,0.0681,-24046677.4774388,0.0446
-"9","All patients receive cementless fixation","Hemiarthroplasty","85 and over",5855401.22245686,-557.705760310082,0.0753,0.07,-32936208.5460892,0.0465
-"10","All patients receive cementless fixation","Total hip arthroplasty","65 to 74",-1086.79700614428,2.27313367518017,0.5355,0.7807,114594.164403351,0.7081
-"11","All patients receive cementless fixation","Total hip arthroplasty","75 to 84",23400.6955196686,0.527163721178382,0.4701,0.5708,6172.54054295382,0.5251
-"12","All patients receive cementless fixation","Total hip arthroplasty","85 and over",-26845.5403809006,-2.92110710077219,0.6059,0.1597,-122898.156084505,0.2967
+"1","All patients receive cemented fixation","Hemiarthroplasty","65 to 74",-2469355.65817617,231.72074540917,0.9463,0.93136,12504457.3752255,0.9582
+"2","All patients receive cemented fixation","Hemiarthroplasty","75 to 84",-5387083.84498543,493.23722175375,0.94556,0.93191,26729669.5020356,0.95844
+"3","All patients receive cemented fixation","Hemiarthroplasty","85 and over",-5673280.17722567,529.589238676245,0.93646,0.93215,28604061.1219216,0.95772
+"4","All patients receive cemented fixation","Total hip arthroplasty","65 to 74",-930664.038713215,53.6694172567511,0.88318,0.99877,3205632.45510647,0.99666
+"5","All patients receive cemented fixation","Total hip arthroplasty","75 to 84",-695004.820914368,41.5336757020793,0.85926,0.99888,2459021.45856787,0.99576
+"6","All patients receive cemented fixation","Total hip arthroplasty","85 and over",-372941.840768483,18.513638507832,0.89223,0.9986,1150577.01754544,0.99613
+"7","All patients receive cementless fixation","Hemiarthroplasty","65 to 74",1449971.99243626,-143.593756026817,0.06481,0.0729,-7679594.62886317,0.04682
+"8","All patients receive cementless fixation","Hemiarthroplasty","75 to 84",4370894.98325545,-405.982803257931,0.05948,0.07178,-21946628.4928376,0.04469
+"9","All patients receive cementless fixation","Hemiarthroplasty","85 and over",5968034.85119157,-558.76934571054,0.06808,0.07272,-30164741.6649553,0.04635
+"10","All patients receive cementless fixation","Total hip arthroplasty","65 to 74",59509.3581852822,1.23786191403306,0.33912,0.66737,4087.02062948613,0.52677
+"11","All patients receive cementless fixation","Total hip arthroplasty","75 to 84",84032.7009421521,-1.16370358016168,0.30053,0.37428,-124587.518995646,0.30992
+"12","All patients receive cementless fixation","Total hip arthroplasty","85 and over",54555.4738205417,-4.26112896151412,0.35855,0.06925,-237835.035689788,0.12263

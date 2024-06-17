@@ -73,6 +73,7 @@ print(paste0("The overall annual savings to Medicare of switching to cemented fi
              ceiling(sum(total$QALY)), " QALYs."))
 
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
+write.csv(analysis, "./full_model.csv")
 ```
 
 Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
@@ -100,7 +101,7 @@ p_all +
   annotate("text", x = 5800, y = 60000000, label = "B") +
   annotate("text", x = -5800, y = -60000000, label = "C") +
   annotate("text", x = 5800, y = -60000000, label = "D") +
-  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   theme_bw() +
@@ -123,7 +124,7 @@ p_all +
   annotate("text", x = 1800, y = 28000000, label = "B") +
   annotate("text", x = -1800, y = -28000000, label = "C") +
   annotate("text", x = 1800, y = -28000000, label = "D") +
-  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +
@@ -147,7 +148,7 @@ p_all +
   annotate("text", x = 140, y = 9000000, label = "B") +
   annotate("text", x = -140, y = -9000000, label = "C") +
   annotate("text", x = 140, y = -9000000, label = "D") +
-  geom_abline(intercept = 0, slope = 50000, linetype = "dashed") +
+  geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
   facet_wrap(vars(Age), ncol = 1) +

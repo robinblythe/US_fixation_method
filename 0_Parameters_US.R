@@ -111,7 +111,7 @@ transitions <- list(
       year2 = rbeta(iter, 1506154.818, 12601370.11),
       year3 = rbeta(iter, 1190652.136, 12916885.47),
       year4 = rbeta(iter, 153996.3315, 13953570.1),
-      year5 = rbeta(iter, 100, 100000) # No deaths?
+      year5 = 0 # No deaths?
     ),
     age_85 = list(
       year1 = rbeta(iter, 3700913.392, 16919758.65),
@@ -161,7 +161,7 @@ transitions <- list(
         year1 = rbeta(iter, 4022.98063, 195785.0572),
         year2 = rbeta(iter, 3128.984212, 196679.0071),
         year3 = rbeta(iter, 446.9977653, 199361.0002),
-        year4 = rbeta(iter, 100, 100000),
+        year4 = 0,
         year5 = rbeta(iter, 446.9977653, 199361.0002)
       ),
       HA_cementless = list(
@@ -174,15 +174,15 @@ transitions <- list(
       THA_cemented = list(
         year1 = rbeta(iter, 211.981138, 11023.01919),
         year2 = rbeta(iter, 211.981138, 11023.01919),
-        year3 = rbeta(iter, 100, 100000),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 16399.96538, 413935.1263),
         year2 = rbeta(iter, 2623.994514, 427711.1041),
         year3 = rbeta(iter, 2623.994514, 427711.1041),
-        year4 = rbeta(iter, 100, 100000),
+        year4 = 0,
         year5 = rbeta(iter, 655.9975232, 429678.3901)
       )
     ),
@@ -199,21 +199,21 @@ transitions <- list(
         year2 = rbeta(iter, 30005.96173, 2748879.502),
         year3 = rbeta(iter, 20003.99067, 2758883.709),
         year4 = rbeta(iter, 5000.998418, 2773887.079),
-        year5 = rbeta(iter, 100, 100000)
+        year5 = 0
       ),
       THA_cemented = list(
         year1 = rbeta(iter, 261.9847299, 16898.01505),
         year2 = rbeta(iter, 130.9923572, 17029.00641),
-        year3 = rbeta(iter, 100, 100000),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 8444.971064, 308522.943),
         year2 = rbeta(iter, 1688.994903, 315279.0486),
         year3 = rbeta(iter, 562.9989436, 316405.4124),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year4 = 0,
+        year5 = 0
       )
     ),
     age_85 = list(
@@ -221,8 +221,8 @@ transitions <- list(
         year1 = rbeta(iter, 81623.92815, 4532276.019),
         year2 = rbeta(iter, 12887.95428, 4600999.659),
         year3 = rbeta(iter, 4296.008692, 4609617.31),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year4 = 0,
+        year5 = 0
       ),
       HA_cementless = list(
         year1 = rbeta(iter, 93576.92565, 3870500.929),
@@ -233,17 +233,17 @@ transitions <- list(
       ),
       THA_cemented = list(
         year1 = rbeta(iter, 120.9917201, 14519.00643),
-        year2 = rbeta(iter, 100, 100000),
-        year3 = rbeta(iter, 100, 100000),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year2 = 0,
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 561.9930449, 78398.03001),
         year2 = rbeta(iter, 561.9930449, 78398.03001),
         year3 = rbeta(iter, 280.9964006, 78678.9913),
-        year4 = rbeta(iter, 100, 100000),
-        year5 = rbeta(iter, 100, 100000)
+        year4 = rbeta(iter, 1, 100000),
+        year5 = rbeta(iter, 1, 100000)
       )
     )
   )
