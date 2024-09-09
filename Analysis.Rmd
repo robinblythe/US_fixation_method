@@ -9,17 +9,16 @@ The goal of this analysis is to replicate the results from Blythe et al (2020): 
 
 ```{r, message = FALSE}
 options(scipen = 100, digits = 5)
-library(tidyverse)
 library(EnvStats)
 library(LaplacesDemon)
 library(patchwork)
 library(knitr)
+library(tidyverse)
 
 # Model inputs
-iter <- 100000 # define number of iterations
+iter <- 50000 # define number of iterations
 discount <- 0.03 # define discount rate
-WTP <- 44771 # US WTP threshold
-set.seed(888) # repeatability
+WTP <- 100000 # US WTP threshold
 ```
 
 The basic structure of this population-based model is as follows:  
@@ -30,6 +29,7 @@ The basic structure of this population-based model is as follows:
 
 ```{r}
 # Call parameters and functions required to populate models
+set.seed(888) # repeatability
 source("./0_Parameters_US.R")
 source("./1_Model_function.R")
 
@@ -55,7 +55,11 @@ analysis <- models |>
   group_by(Strategy, Prosthesis, Age) |>
   summarise(
     Total_Cost_5y = mean(Costs),
+    Total_Cost_5y_low = quantile(Costs, 0.025),
+    Total_Cost_5y_high = quantile(Costs, 0.975),
     Total_QALY_5y = mean(QALYs),
+    Total_QALY_5y_low = quantile(QALYs, 0.025),
+    Total_QALY_5y_high = quantile(QALYs, 0.975),
     Pct_Cost_Saving = sum(Costs < 0) / iter,
     Pct_QALY_Gaining = sum(QALYs > 0) / iter,
     NMB = sum(mean(QALYs) * WTP - mean(Costs)),
@@ -64,13 +68,20 @@ analysis <- models |>
   mutate(Total_Cost_5y = Total_Cost_5y * (1 + discount)^5) # Convert $2019 to $2024
 
 total <- analysis |>
-  filter(Strategy == "All patients receive cemented fixation") |>
+  group_by(Strategy) |>
   summarise(Cost = sum(Total_Cost_5y),
-            QALY = sum(Total_QALY_5y))
+            Cost_low = sum(Total_Cost_5y_low),
+            Cost_high = sum(Total_Cost_5y_high),
+            QALY = sum(Total_QALY_5y),
+            QALY_low = sum(Total_QALY_5y_low),
+            QALY_high = sum(Total_QALY_5y_high))
 
-print(paste0("The overall annual savings to Medicare of switching to cemented fixation are $",
-             ceiling(sum(total$Cost)), " and ",
-             ceiling(sum(total$QALY)), " QALYs."))
+with(subset(total, Strategy == "All patients receive cemented fixation"), 
+     print(paste0("The overall annual savings to Medicare of switching to cemented fixation are $",
+             ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
+             " and ",
+             ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
+             " QALYs.")))
 
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 write.csv(analysis, "./full_model.csv")
@@ -270,7 +281,6 @@ print(paste0("Cementing requires an additional ", ceiling(extra_minutes), " hour
 print("This is the time cost to surgeons of applying cement. The tradeoff is that this leads to less revisions and dislocations:")
 print(paste0(ceiling(revisions_baseline - revisions_cemented), " revisions avoided over 5 years. "))
 print(paste0(ceiling(dislocations_baseline - dislocations_cemented), " dislocations avoided over 5 years."))
-
 
 ```
 
