@@ -1765,20 +1765,20 @@ analysis &lt;- models |&gt;
 <pre><code>## `summarise()` has grouped output by &#39;Strategy&#39;, &#39;Prosthesis&#39;. You can override
 ## using the `.groups` argument.</code></pre>
 <pre class="r"><code>total &lt;- analysis |&gt;
-  filter(Strategy == &quot;All patients receive cemented fixation&quot;) |&gt;
+  group_by(Strategy) |&gt;
   summarise(Cost = sum(Total_Cost_5y),
             Cost_low = sum(Total_Cost_5y_low),
             Cost_high = sum(Total_Cost_5y_high),
             QALY = sum(Total_QALY_5y),
             QALY_low = sum(Total_QALY_5y_low),
-            QALY_high = sum(Total_QALY_5y_high))</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;Strategy&#39;. You can override using the
-## `.groups` argument.</code></pre>
-<pre class="r"><code>print(paste0(&quot;The overall annual savings to Medicare of switching to cemented fixation are $&quot;,
-             ceiling(sum(total$Cost)), &quot; ($&quot;, ceiling(sum(total$Cost_low)), &quot;, $&quot;, ceiling(sum(total$Cost_high)), &quot;)&quot;,
+            QALY_high = sum(Total_QALY_5y_high))
+
+with(subset(total, Strategy == &quot;All patients receive cemented fixation&quot;), 
+     print(paste0(&quot;The overall annual savings to Medicare of switching to cemented fixation are $&quot;,
+             ceiling(sum(Cost)), &quot; ($&quot;, ceiling(sum(Cost_low)), &quot;, $&quot;, ceiling(sum(Cost_high)), &quot;)&quot;,
              &quot; and &quot;,
-             ceiling(sum(total$QALY)), &quot; (&quot;, ceiling(sum(total$QALY_low)), &quot;, &quot;, ceiling(sum(total$QALY_high)), &quot;)&quot;,
-             &quot; QALYs.&quot;))</code></pre>
+             ceiling(sum(QALY)), &quot; (&quot;, ceiling(sum(QALY_low)), &quot;, &quot;, ceiling(sum(QALY_high)), &quot;)&quot;,
+             &quot; QALYs.&quot;)))</code></pre>
 <pre><code>## [1] &quot;The overall annual savings to Medicare of switching to cemented fixation are $-15973120 ($-38181218, $6228049) and 1550 (-374, 3490) QALYs.&quot;</code></pre>
 <pre class="r"><code>kable(analysis, format.args = list(big.mark = &quot;,&quot;), caption = &quot;Simulation results&quot;)</code></pre>
 <table style="width:100%;">
