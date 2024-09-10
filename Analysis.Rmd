@@ -69,19 +69,25 @@ analysis <- models |>
 
 total <- analysis |>
   group_by(Strategy) |>
-  summarise(Cost = sum(Total_Cost_5y),
-            Cost_low = sum(Total_Cost_5y_low),
-            Cost_high = sum(Total_Cost_5y_high),
-            QALY = sum(Total_QALY_5y),
-            QALY_low = sum(Total_QALY_5y_low),
-            QALY_high = sum(Total_QALY_5y_high))
+  summarise(
+    Cost = sum(Total_Cost_5y),
+    Cost_low = sum(Total_Cost_5y_low),
+    Cost_high = sum(Total_Cost_5y_high),
+    QALY = sum(Total_QALY_5y),
+    QALY_low = sum(Total_QALY_5y_low),
+    QALY_high = sum(Total_QALY_5y_high)
+  )
 
-with(subset(total, Strategy == "All patients receive cemented fixation"), 
-     print(paste0("The overall annual savings to Medicare of switching to cemented fixation are $",
-             ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
-             " and ",
-             ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
-             " QALYs.")))
+with(
+  subset(total, Strategy == "All patients receive cemented fixation"),
+  print(paste0(
+    "The overall annual savings to Medicare of switching to cemented fixation are $",
+    ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
+    " and ",
+    ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
+    " QALYs."
+  ))
+)
 
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 write.csv(analysis, "./full_model.csv")
@@ -94,8 +100,10 @@ p_all <- models |>
   group_by(Strategy, Prosthesis, Age) |>
   mutate(sim_no = row_number()) |>
   group_by(sim_no, Strategy) |>
-  summarise(Costs = sum(Costs),
-            QALYs = sum(QALYs)) |>
+  summarise(
+    Costs = sum(Costs),
+    QALYs = sum(QALYs)
+  ) |>
   ggplot()
 p_ha <- models |>
   filter(Prosthesis == "Hemiarthroplasty") |>
@@ -118,11 +126,15 @@ p_all +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
-  scale_x_continuous(limits = c(-6000, 6000),
-                     breaks = seq(-6000, 6000, 3000)) +
-  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-60000000, 60000000),
-                     breaks = seq(-60000000, 60000000, 15000000)) +
+  scale_x_continuous(
+    limits = c(-6000, 6000),
+    breaks = seq(-6000, 6000, 3000)
+  ) +
+  scale_y_continuous(
+    labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+    limits = c(-60000000, 60000000),
+    breaks = seq(-60000000, 60000000, 15000000)
+  ) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -142,11 +154,15 @@ p_all +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
-  scale_x_continuous(limits = c(-2000, 2000),
-                     breaks = seq(-2000, 2000, 1000)) +
-  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-30000000, 30000000),
-                     breaks = seq(-30000000, 30000000, 15000000)) +
+  scale_x_continuous(
+    limits = c(-2000, 2000),
+    breaks = seq(-2000, 2000, 1000)
+  ) +
+  scale_y_continuous(
+    labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+    limits = c(-30000000, 30000000),
+    breaks = seq(-30000000, 30000000, 15000000)
+  ) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -166,11 +182,15 @@ p_all +
   theme_bw() +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
-  scale_x_continuous(limits = c(-150, 150),
-                     breaks = seq(-150, 150, 75)) +
-  scale_y_continuous(labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-                     limits = c(-10000000, 10000000),
-                     breaks = seq(-10000000, 10000000, 5000000)) +
+  scale_x_continuous(
+    limits = c(-150, 150),
+    breaks = seq(-150, 150, 75)
+  ) +
+  scale_y_continuous(
+    labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
+    limits = c(-10000000, 10000000),
+    breaks = seq(-10000000, 10000000, 5000000)
+  ) +
   labs(
     x = "QALYs",
     y = "Costs ($millions)",
@@ -184,10 +204,10 @@ p_all +
 ggsave("./results_graphic.png", height = 6, width = 8)
 ```
 
-Some notes for your abstract:
-One of our primary motivations is to highlight the false economy of saving 8 minutes for a primary procedure. In our all hips are cemented scenario, this is how that might look:
+One of our primary motivations is to highlight the false economy of saving 7 minutes for a primary procedure. In our all hips are cemented scenario, this is how that might look:
 
 ```{r, echo = FALSE, message = FALSE}
+set.seed(888)
 baseline_65 <- list(
   HA_cemented_65 = simulator(n = prev$n_65_HA_cemented, agegroup = "age_65", modelgroup = "HA_cemented"),
   HA_cementless_65 = simulator(n = prev$n_65_HA_cementless, agegroup = "age_65", modelgroup = "HA_cementless"),
@@ -232,56 +252,126 @@ cemented_85 <- do.call(rbind, cemented_85)
 
 baseline <- do.call(rbind, list(baseline_65, baseline_75, baseline_85))
 cemented <- do.call(rbind, list(cemented_65, cemented_75, cemented_85))
+remove(baseline_65, baseline_75, baseline_85, cemented_65, cemented_75, cemented_85)
 
-revisions_baseline <- baseline |>
-  group_by(Surgery) |>
-  summarise(Revisions = sum(mean(Revision_year1),
-                            mean(Revision_year2),
-                            mean(Revision_year3),
-                            mean(Revision_year4),
-                            mean(Revision_year5))) |>
-  summarise(Total = sum(Revisions)) |>
-  pull()
+baseline_revisions <- baseline |>
+  rowwise() |>
+  mutate(
+    Revisions = sum(c(
+      Revision_year1,
+      Revision_year2,
+      Revision_year3,
+      Revision_year4,
+      Revision_year5
+    ))
+  ) |>
+  select(Surgery, Revisions) %>%
+  split(.$Surgery) |>
+  map(pull, Revisions) |>
+  reduce(`+`)
 
-dislocations_baseline <- baseline |>
-  group_by(Surgery) |>
-  summarise(Dislocations = sum(mean(Dislocation_year1),
-                            mean(Dislocation_year2),
-                            mean(Dislocation_year3),
-                            mean(Dislocation_year4),
-                            mean(Dislocation_year5))) |>
-  summarise(Total = sum(Dislocations)) |>
-  pull()
+baseline_dislocations <- baseline |>
+  rowwise() |>
+  mutate(
+    Dislocations = sum(c(
+      Dislocation_year1,
+      Dislocation_year2,
+      Dislocation_year3,
+      Dislocation_year4,
+      Dislocation_year5
+    ))
+  ) |>
+  select(Surgery, Dislocations) %>%
+  split(.$Surgery) |>
+  map(pull, Dislocations) |>
+  reduce(`+`)
 
-revisions_cemented <- cemented |>
-  group_by(Surgery) |>
-  summarise(Revisions = sum(mean(Revision_year1),
-                            mean(Revision_year2),
-                            mean(Revision_year3),
-                            mean(Revision_year4),
-                            mean(Revision_year5))) |>
-  summarise(Total = sum(Revisions)) |>
-  pull()
+cemented_revisions <- cemented |>
+  rowwise() |>
+  mutate(
+    Revisions = sum(c(
+      Revision_year1,
+      Revision_year2,
+      Revision_year3,
+      Revision_year4,
+      Revision_year5
+    ))
+  ) |>
+  select(Surgery, Revisions) %>%
+  split(.$Surgery) |>
+  map(pull, Revisions) |>
+  reduce(`+`)
 
-dislocations_cemented <- cemented |>
-  group_by(Surgery) |>
-  summarise(Dislocations = sum(mean(Dislocation_year1),
-                            mean(Dislocation_year2),
-                            mean(Dislocation_year3),
-                            mean(Dislocation_year4),
-                            mean(Dislocation_year5))) |>
-  summarise(Total = sum(Dislocations)) |>
-  pull()
+cemented_dislocations <- cemented |>
+  rowwise() |>
+  mutate(
+    Dislocations = sum(c(
+      Dislocation_year1,
+      Dislocation_year2,
+      Dislocation_year3,
+      Dislocation_year4,
+      Dislocation_year5
+    ))
+  ) |>
+  select(Surgery, Dislocations) %>%
+  split(.$Surgery) |>
+  map(pull, Dislocations) |>
+  reduce(`+`)
 
-extra_minutes <- sum(prev$n_65_HA_cementless, prev$n_65_THA_cementless,
-                     prev$n_75_HA_cementless, prev$n_75_THA_cementless,
-                     prev$n_85_HA_cementless, prev$n_85_THA_cementless) * mean(rgamma(iter, shape = 32.478, scale = 0.223))/60
 
-print(paste0("Cementing requires an additional ", ceiling(extra_minutes), " hours per year (nationally) of operating theater time."))
-print("This is the time cost to surgeons of applying cement. The tradeoff is that this leads to less revisions and dislocations:")
-print(paste0(ceiling(revisions_baseline - revisions_cemented), " revisions avoided over 5 years. "))
-print(paste0(ceiling(dislocations_baseline - dislocations_cemented), " dislocations avoided over 5 years."))
+change <- tibble(
+  Revisions = cemented_revisions - baseline_revisions,
+  Dislocations = cemented_dislocations - baseline_dislocations
+)
 
+
+# Cementing time: from Cochrane review doi.org/10.1002/14651858.CD001706.pub4
+# 7.24 minutes on average (4.75, 9.73)
+set.seed(888)
+extra_minutes_OT <- sum(
+  prev$n_65_HA_cementless, prev$n_65_THA_cementless,
+  prev$n_75_HA_cementless, prev$n_75_THA_cementless,
+  prev$n_85_HA_cementless, prev$n_85_THA_cementless
+) * rgamma(iter, shape = 30.372, scale = 0.231) / 60
+
+# Change in revisions:
+print(paste0(
+  "Cementing requires an additional ", ceiling(mean(extra_minutes_OT)), " (",
+  ceiling(quantile(extra_minutes_OT, 0.025)), ", ", ceiling(quantile(extra_minutes_OT, 0.975)), ") ",
+  " hours per year (nationally) of operating theater time."
+))
+
+print(paste0(
+  "Revision change over 5 years: ", ceiling(mean(change$Revisions)), " (",
+  ceiling(quantile(change$Revisions, 0.975)), ", ",
+  ceiling(quantile(change$Revisions, 0.025)), ")"
+))
+
+
+# Dislocation time from https://doi.org/10.1016/j.ajem.2005.03.002
+# Time required to do the closed reduction: 10 (1, 41) minutes with a sample of 112
+# Assuming SD of 10.72, the SE is 1.013
+reduction_time <- rnorm(iter, 10, 1.013) * change$Dislocations / 60
+
+print(paste0(
+  "As a result of cementing, there would be an anticipated change of ",
+  ceiling(mean(reduction_time)), " (",
+  ceiling(quantile(reduction_time, 0.025)), ", ",
+  ceiling(quantile(reduction_time, 0.975)), ") ",
+  "hours of physician time from avoiding closed reductions."
+))
+
+# ED time from same paper (above), patients waited from 1h25m to 13h40m
+# Mean of 5.95. Assuming SD of 3.20, SE is 0.297
+ED_time <- rnorm(iter, 5.95, 0.297) * change$Dislocations
+
+print(paste0(
+  "This would be accompanied by an anticipated change of ",
+  ceiling(mean(ED_time)), " (",
+  ceiling(quantile(ED_time, 0.025)), ", ",
+  ceiling(quantile(ED_time, 0.975)), ") ",
+  "hours of ED time from avoiding dislocation-associated visits."
+))
 ```
 
 
