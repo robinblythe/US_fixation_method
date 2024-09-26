@@ -37,7 +37,7 @@ simulator <- function(n, agegroup, modelgroup) {
         Costs =
           get(paste0("Costs_year", prev_year)) +
             Dislocation * costs$cost_dislocation[[paste0("year", year)]] +
-            Revision * costs$cost_revision[[modelgroup]][[paste0("year", year)]],
+            Revision * costs$cost_revision$revision_generic[[paste0("year", year)]],
 
         # QALYs are cumulative
         # Equal to last year's QALYs plus this year's stable, dislocations, and revisions
@@ -69,7 +69,7 @@ simulator <- function(n, agegroup, modelgroup) {
       Costs_year1 =
         Cost_surgery +
           Dislocation_year1 * costs$cost_dislocation$year1 +
-          Revision_year1 * costs$cost_revision[[modelgroup]]$year1,
+          Revision_year1 * costs$cost_revision$revision_generic$year1,
 
       # QALYs at the end of year 1 = QALYs from stable state, dislocations, and revisions (no QALY for death)
       QALYs_year1 =

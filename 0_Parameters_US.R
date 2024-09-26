@@ -25,14 +25,20 @@ type_surg <- rdirichlet(iter, c(0.55, 0.24, 0.21))
 # All procedure costs are now cost/minute * number of minutes + add-ons (e.g. cement)
 cost_min_OT <- rgamma(iter, shape = 2.030, scale = 22.675) / (1 + discount)^3
 
+# Estimate of proportion of revisions due to septic vs aseptic
+aseptic_revision <- rbeta(iter, 702, 86)
+
 generic <- list(
 
-  # Procedure costs = cost per minute times number of minutes. Mean duration so use rnorm
+  # Primary procedure costs = cost per minute times number of minutes. Mean duration so use rnorm
   cost_HA = cost_min_OT * rnorm(iter, 78.400, 0.384),
   cost_THA = cost_min_OT * rnorm(iter, 92.682, 0.887),
-  cost_revision_HA = cost_min_OT * rnorm(iter, 114.805, 1.624),
-  cost_revision_THA = cost_min_OT * rnorm(iter, 126.609, 4.865),
-
+  
+  # Cost of revision from https://doi.org/10.1016/j.arth.2018.05.008
+  # Weighted average based on aseptic vs infected revisions
+  cost_revision = (aseptic_revision * rgamma(iter, shape = 1079.724, scale = 56.392) + 
+    (1 - aseptic_revision) * rgamma(iter, shape = 142.787, scale = 639.616))*(1 + discount),
+  
   # Cost of cementing
   # Extra theatre time from original study, https://doi.org/10.1002/14651858.CD001706.pub4
   cost_cementing = rgamma(iter, shape = 32.478, scale = 0.223) * # Number of minutes taken to apply cement
@@ -315,8 +321,15 @@ costs <- list(
   ),
 
   # Revision surgery
-  # Assume revision leads to same surgery type as initial procedure
+  # Assume revision leads to THA
   cost_revision = list(
+    revision_generic = list(
+      year1 = generic$cost_revision,
+      year2 = generic$cost_revision / (1 + discount),
+      year3 = generic$cost_revision / (1 + discount)^2,
+      year4 = generic$cost_revision / (1 + discount)^3,
+      year5 = generic$cost_revision / (1 + discount)^4
+    ),
     HA_cemented = list(
       year1 = (generic$cost_revision_HA +
         generic$cost_cementing +
