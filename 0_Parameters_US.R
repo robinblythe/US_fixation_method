@@ -25,7 +25,7 @@ type_surg <- rdirichlet(iter, c(0.55, 0.24, 0.21))
 # All procedure costs are now cost/minute * number of minutes + add-ons (e.g. cement)
 cost_min_OT <- rgamma(iter, shape = 2.030, scale = 22.675) / (1 + discount)^3
 
-# Estimate of proportion of revisions due to septic vs aseptic
+# Estimate of proportion of revisions due to septic vs aseptic from https://doi.org/10.1016/j.arth.2018.05.008
 aseptic_revision <- rbeta(iter, 702, 86)
 
 generic <- list(
