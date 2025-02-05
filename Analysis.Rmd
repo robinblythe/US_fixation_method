@@ -89,8 +89,81 @@ with(
   ))
 )
 
+with(
+  subset(total, Strategy == "All patients receive cementless fixation"),
+  print(paste0(
+    "The overall annual cost to Medicare of switching to cementless fixation are $",
+    ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
+    " and ",
+    ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
+    " QALYs."
+  ))
+)
+
+
+
 kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 write.csv(analysis, "./full_model.csv")
+
+```
+
+The above results demonstrate the cost and utility impacts of moving to a new fixation policy.
+
+``` {r}
+# One way sensitivity analysis in the 75-84 age group
+cemented_75 <- bind_rows(
+  simulator(n = (prev$n_75_HA_cemented + prev$n_75_HA_cementless), agegroup = "age_75", 
+            modelgroup = "HA_cemented"),
+  simulator(n = (prev$n_75_THA_cemented + prev$n_75_THA_cementless), agegroup = "age_75", modelgroup = "THA_cemented")
+)
+
+cementless_75 <- bind_rows(
+  simulator(n = (prev$n_75_HA_cemented + prev$n_75_HA_cementless), agegroup = "age_75", modelgroup = "HA_cementless"),
+  simulator(n = (prev$n_75_THA_cemented + prev$n_75_THA_cementless), agegroup = "age_75", modelgroup = "THA_cementless")
+)
+
+sens_cem_75 <- cemented_75 |>
+  rowwise() |>
+  mutate(dislocations = sum(Dislocation_year1,
+                               Dislocation_year2,
+                               Dislocation_year3,
+                               Dislocation_year4,
+                               Dislocation_year5),
+         revisions = sum(Revision_year1,
+                            Revision_year2,
+                            Revision_year3,
+                            Revision_year4,
+                            Revision_year5)) |>
+  group_by(Surgery) |>
+  summarise(dislocations = mean(dislocations),
+            revisions = mean(revisions),
+            surgery_costs = mean(Cost_surgery)) |>
+  mutate(type = "cemented")
+
+sens_cemless_75 <- cementless_75 |>
+  rowwise() |>
+  mutate(dislocations = sum(Dislocation_year1,
+                               Dislocation_year2,
+                               Dislocation_year3,
+                               Dislocation_year4,
+                               Dislocation_year5),
+         revisions = sum(Revision_year1,
+                            Revision_year2,
+                            Revision_year3,
+                            Revision_year4,
+                            Revision_year5)) |>
+  group_by(Surgery) |>
+  summarise(dislocations = mean(dislocations),
+            revisions = mean(revisions),
+            surgery_costs = mean(Cost_surgery)) |>
+  mutate(type = "cementless")
+
+sens_75 <- bind_rows(sens_cem_75, sens_cemless_75)
+remove(sens_cem_75, sens_cemless_75, cemented_75, cementless_75)
+
+surg_costs <- sens_75 |>
+  group_by(type) |>
+  summarise(cost_surg = sum(surgery_costs))
 ```
 
 Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
