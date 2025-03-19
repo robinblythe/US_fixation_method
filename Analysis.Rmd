@@ -447,8 +447,20 @@ print(paste0(
 ))
 ```
 
+Exploratory revision rate check:
+```{r}
+p <- rbind(
+  cbind(age = "Age 65", map_df(transitions$revision$age_65, ~as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 75", map_df(transitions$revision$age_75, ~as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 85", map_df(transitions$revision$age_85, ~as.data.frame(.x), .id = "Fixation"))
+) |>
+  mutate(Fixation = as.factor(Fixation)) |>
+  ggplot()
 
+levels(p$data$Fixation) <- c("Cemented HA", "Cementless HA", "Cemented THA", "Cementless THA")
 
+p +
+  geom_histogram(aes(y = year1), fill = 1, alpha = 0.3) +
+  facet_wrap(vars(age, Fixation), ncol = 2)
 
-
-
+```
