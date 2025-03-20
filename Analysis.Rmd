@@ -12,6 +12,7 @@ options(scipen = 100, digits = 5)
 library(EnvStats)
 library(LaplacesDemon)
 library(patchwork)
+library(gridExtra)
 library(knitr)
 library(tidyverse)
 
@@ -447,20 +448,32 @@ print(paste0(
 ))
 ```
 
-Exploratory revision rate check:
+Revision rate figure to aid interpretation of model parameters. Combine with prevalence data to meet journal table and figure limits.
 ```{r}
 p <- rbind(
-  cbind(age = "Age 65", map_df(transitions$revision$age_65, ~as.data.frame(.x), .id = "Fixation")),
-  cbind(age = "Age 75", map_df(transitions$revision$age_75, ~as.data.frame(.x), .id = "Fixation")),
-  cbind(age = "Age 85", map_df(transitions$revision$age_85, ~as.data.frame(.x), .id = "Fixation"))
+  cbind(age = "Age 65 - 74", map_df(transitions$revision$age_65, ~as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 75 - 84", map_df(transitions$revision$age_75, ~as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 85 and over", map_df(transitions$revision$age_85, ~as.data.frame(.x), .id = "Fixation"))
 ) |>
-  mutate(Fixation = as.factor(Fixation)) |>
+  pivot_longer(cols = c(year1, year2, year3, year4, year5), names_to = "year") |>
+  mutate(Fixation = as.factor(Fixation),
+         year = as.factor(year)) |>
   ggplot()
 
 levels(p$data$Fixation) <- c("Cemented HA", "Cementless HA", "Cemented THA", "Cementless THA")
+levels(p$data$year) <- c("Year 1", "Year 2", "Year 3", "Year 4", "Year 5")
 
 p +
-  geom_histogram(aes(y = year1), fill = 1, alpha = 0.3) +
-  facet_wrap(vars(age, Fixation), ncol = 2)
+  geom_histogram(aes(y = value, fill = Fixation), alpha = 0.6, position = "identity", bins = 40) +
+  scale_fill_manual(values = c("#440154FF", "#7AD151FF", "#414487FF", "#22A884FF")) +
+  facet_wrap(vars(age, year), ncol = 5) +
+  scale_y_continuous(limits = c(0, 0.04), breaks = seq(0, 0.04, 0.01)) +
+  scale_x_continuous(limits = c(0, 50000), breaks = c(0, 25000, 50000)) +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        legend.position = "top") +
+  labs(x = "Number of simulations", y = "Probability of event")
+
+ggsave("revision_rates.jpg", height = 6, width = 9)
 
 ```
