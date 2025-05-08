@@ -10,7 +10,6 @@ The goal of this analysis is to replicate the results from Blythe et al (2020): 
 ```{r, message = FALSE}
 options(scipen = 100, digits = 5)
 library(EnvStats)
-library(LaplacesDemon)
 library(patchwork)
 library(gridExtra)
 library(knitr)
@@ -45,10 +44,10 @@ models <- rbind(
   model_85_plus
 )
 
-kable(head(models), format.args = list(big.mark = ","), caption = "Extract of simulation model results")
+head(models)
 ```
 
-Results from the models are calculated as the mean difference between strategies compared to baseline. We can also see how many of these simulations are cost-saving (costs < 0), QALY-gaining (QALYs > 0) and cost-effective ()
+Results from the models are calculated as the mean difference between strategies compared to baseline. We can also see how many of these simulations are cost-saving (costs < 0), QALY-gaining (QALYs > 0) and cost-effective
 
 ```{r}
 # Analysis summary
@@ -91,6 +90,17 @@ with(
 )
 
 with(
+  subset(total, Strategy == "All patients receive cemented fixation"),
+  print(paste0(
+    "The per-patient savings from cemented fixation are $",
+    ceiling(sum(Cost) / sum(unlist(prev))), " ($", ceiling(sum(Cost_low) / sum(unlist(prev))), ", $", ceiling(sum(Cost_high) / sum(unlist(prev))), ")",
+    " and ",
+    sum(QALY) / sum(unlist(prev)), " (", sum(QALY_low) / sum(unlist(prev)), ", ", sum(QALY_high) / sum(unlist(prev)), ")",
+    " QALYs."
+  ))
+)
+
+with(
   subset(total, Strategy == "All patients receive cementless fixation"),
   print(paste0(
     "The overall annual cost to Medicare of switching to cementless fixation are $",
@@ -101,20 +111,29 @@ with(
   ))
 )
 
+with(
+  subset(total, Strategy == "All patients receive cementless fixation"),
+  print(paste0(
+    "The per-patient costs from cementless fixation are $",
+    ceiling(sum(Cost) / sum(unlist(prev))), " ($", ceiling(sum(Cost_low) / sum(unlist(prev))), ", $", ceiling(sum(Cost_high) / sum(unlist(prev))), ")",
+    " and ",
+    sum(QALY) / sum(unlist(prev)), " (", sum(QALY_low) / sum(unlist(prev)), ", ", sum(QALY_high) / sum(unlist(prev)), ")",
+    " QALYs."
+  ))
+)
 
-
-kable(analysis, format.args = list(big.mark = ","), caption = "Simulation results")
 write.csv(analysis, "./full_model.csv")
-
 ```
 
 The above results demonstrate the cost and utility impacts of moving to a new fixation policy.
 
 ``` {r}
-# One way sensitivity analysis in the 75-84 age group
+# Likely to be a slight increase to surgery costs for initial procedure
 cemented_75 <- bind_rows(
-  simulator(n = (prev$n_75_HA_cemented + prev$n_75_HA_cementless), agegroup = "age_75", 
-            modelgroup = "HA_cemented"),
+  simulator(
+    n = (prev$n_75_HA_cemented + prev$n_75_HA_cementless), agegroup = "age_75",
+    modelgroup = "HA_cemented"
+  ),
   simulator(n = (prev$n_75_THA_cemented + prev$n_75_THA_cementless), agegroup = "age_75", modelgroup = "THA_cemented")
 )
 
@@ -125,38 +144,54 @@ cementless_75 <- bind_rows(
 
 sens_cem_75 <- cemented_75 |>
   rowwise() |>
-  mutate(dislocations = sum(Dislocation_year1,
-                               Dislocation_year2,
-                               Dislocation_year3,
-                               Dislocation_year4,
-                               Dislocation_year5),
-         revisions = sum(Revision_year1,
-                            Revision_year2,
-                            Revision_year3,
-                            Revision_year4,
-                            Revision_year5)) |>
+  mutate(
+    dislocations = sum(
+      Dislocation_year1,
+      Dislocation_year2,
+      Dislocation_year3,
+      Dislocation_year4,
+      Dislocation_year5
+    ),
+    revisions = sum(
+      Revision_year1,
+      Revision_year2,
+      Revision_year3,
+      Revision_year4,
+      Revision_year5
+    )
+  ) |>
   group_by(Surgery) |>
-  summarise(dislocations = mean(dislocations),
-            revisions = mean(revisions),
-            surgery_costs = mean(Cost_surgery)) |>
+  summarise(
+    dislocations = mean(dislocations),
+    revisions = mean(revisions),
+    surgery_costs = mean(Cost_surgery)
+  ) |>
   mutate(type = "cemented")
 
 sens_cemless_75 <- cementless_75 |>
   rowwise() |>
-  mutate(dislocations = sum(Dislocation_year1,
-                               Dislocation_year2,
-                               Dislocation_year3,
-                               Dislocation_year4,
-                               Dislocation_year5),
-         revisions = sum(Revision_year1,
-                            Revision_year2,
-                            Revision_year3,
-                            Revision_year4,
-                            Revision_year5)) |>
+  mutate(
+    dislocations = sum(
+      Dislocation_year1,
+      Dislocation_year2,
+      Dislocation_year3,
+      Dislocation_year4,
+      Dislocation_year5
+    ),
+    revisions = sum(
+      Revision_year1,
+      Revision_year2,
+      Revision_year3,
+      Revision_year4,
+      Revision_year5
+    )
+  ) |>
   group_by(Surgery) |>
-  summarise(dislocations = mean(dislocations),
-            revisions = mean(revisions),
-            surgery_costs = mean(Cost_surgery)) |>
+  summarise(
+    dislocations = mean(dislocations),
+    revisions = mean(revisions),
+    surgery_costs = mean(Cost_surgery)
+  ) |>
   mutate(type = "cementless")
 
 sens_75 <- bind_rows(sens_cem_75, sens_cemless_75)
@@ -167,7 +202,7 @@ surg_costs <- sens_75 |>
   summarise(cost_surg = sum(surgery_costs))
 ```
 
-Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 50000x, or 50000/QALY as the cost-effectiveness threshold.
+Looking at the CEA plots, it seems fairly clear that the choice to cement is cost-effective. Note - all simulations are relative to the origin (0, 0) and represent changes to costs/QALYs. The WTP line formula is y ~ 100000x, or 100000/QALY as the cost-effectiveness threshold.
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
 p_all <- models |>
@@ -186,7 +221,7 @@ p_tha <- models |>
   filter(Prosthesis == "Total hip arthroplasty") |>
   ggplot()
 
-colours <- c("#999999", "#8B0000")
+colours <- c("#EF7C00", "#003D7C")
 
 p_all +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
@@ -275,7 +310,7 @@ p_all +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 
-ggsave("./results_graphic.png", height = 6, width = 8)
+ggsave("./results_graphic.tiff", height = 6, width = 8)
 ```
 
 One of our primary motivations is to highlight the false economy of saving 7 minutes for a primary procedure. In our all hips are cemented scenario, this is how that might look:
@@ -451,13 +486,15 @@ print(paste0(
 Revision rate figure to aid interpretation of model parameters. Combine with prevalence data to meet journal table and figure limits.
 ```{r}
 p <- rbind(
-  cbind(age = "Age 65 - 74", map_df(transitions$revision$age_65, ~as.data.frame(.x), .id = "Fixation")),
-  cbind(age = "Age 75 - 84", map_df(transitions$revision$age_75, ~as.data.frame(.x), .id = "Fixation")),
-  cbind(age = "Age 85 and over", map_df(transitions$revision$age_85, ~as.data.frame(.x), .id = "Fixation"))
+  cbind(age = "Age 65 - 74", map_df(transitions$revision$age_65, ~ as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 75 - 84", map_df(transitions$revision$age_75, ~ as.data.frame(.x), .id = "Fixation")),
+  cbind(age = "Age 85 and over", map_df(transitions$revision$age_85, ~ as.data.frame(.x), .id = "Fixation"))
 ) |>
   pivot_longer(cols = c(year1, year2, year3, year4, year5), names_to = "year") |>
-  mutate(Fixation = as.factor(Fixation),
-         year = as.factor(year)) |>
+  mutate(
+    Fixation = as.factor(Fixation),
+    year = as.factor(year)
+  ) |>
   ggplot()
 
 levels(p$data$Fixation) <- c("Cemented HA", "Cementless HA", "Cemented THA", "Cementless THA")
@@ -470,10 +507,11 @@ p +
   scale_y_continuous(limits = c(0, 0.04), breaks = seq(0, 0.04, 0.01)) +
   scale_x_continuous(limits = c(0, 50000), breaks = c(0, 25000, 50000)) +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(),
-        legend.position = "top") +
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position = "top"
+  ) +
   labs(x = "Number of simulations", y = "Probability of event")
 
 ggsave("revision_rates.jpg", height = 6, width = 9)
-
 ```

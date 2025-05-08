@@ -1,7 +1,9 @@
-# Enter parameters using US data
-# All costs updated to USD 2019
+# All costs in 2019 USD; model uses 2025 USD with conversion of (1+r)^t
+iter <- 50000 # define number of iterations
+discount <- 0.03 # define discount rate
+WTP <- 100000 # US WTP threshold
 
-# Number of patients in each group, US data
+# Number of patients in each group, registry data
 prev <- list(
   n_65_HA_cemented = 565,
   n_65_HA_cementless = 925,
@@ -17,9 +19,9 @@ prev <- list(
   n_85_THA_cementless = 255
 )
 
-# Initial generic measures
+# Initial parameters
 # Cementless screws are $53ea; 55% use no screws, 24% use one, and 21% use two.
-type_surg <- rdirichlet(iter, c(0.55, 0.24, 0.21))
+type_surg <- LaplacesDemon::rdirichlet(iter, c(0.55, 0.24, 0.21))
 
 # Cost per minute OT time in the USA, updated 2022 -> 2019 from https://doi.org/10.55576/job.v2i4.23
 # All procedure costs are now cost/minute * number of minutes + add-ons (e.g. cement)
@@ -33,12 +35,12 @@ generic <- list(
   # Primary procedure costs = cost per minute times number of minutes. Mean duration so use rnorm
   cost_HA = cost_min_OT * rnorm(iter, 78.400, 0.384),
   cost_THA = cost_min_OT * rnorm(iter, 92.682, 0.887),
-  
+
   # Cost of revision from https://doi.org/10.1016/j.arth.2018.05.008
   # Weighted average based on aseptic vs infected revisions
-  cost_revision = (aseptic_revision * rgamma(iter, shape = 1079.724, scale = 56.392) + 
-    (1 - aseptic_revision) * rgamma(iter, shape = 142.787, scale = 639.616))*(1 + discount),
-  
+  cost_revision = (aseptic_revision * rgamma(iter, shape = 1079.724, scale = 56.392) +
+    (1 - aseptic_revision) * rgamma(iter, shape = 142.787, scale = 639.616)) * (1 + discount),
+
   # Cost of cementing
   # Extra theatre time from original study, https://doi.org/10.1002/14651858.CD001706.pub4
   cost_cementing = rgamma(iter, shape = 32.478, scale = 0.223) * # Number of minutes taken to apply cement
@@ -47,14 +49,15 @@ generic <- list(
 
   cost_cementless = (type_surg[, 2] * 53 + type_surg[, 3] * 53 * 2) / (1 + discount)^1, # cost of cementless screws, 2024
 
-  # HA is a weighted average, 65% bipolar, 35% monopolar
+  # HA is a weighted average, 65% bipolar, 35% monopolar, based on expert advice from AJRR
   cost_HA_prosthesis = (0.65 * rnorm(iter, mean = 2390.5, sd = 262.246) + # Bipolar
     0.35 * rnorm(iter, mean = 1658.5, sd = 129.085)) / (1 + discount)^1, # Monopolar
 
   # THA assumes ceramic head, same price for cemented and cementless prostheses
   cost_THA_prosthesis = list(
     cemented = rnorm(iter, mean = 4388, sd = 164.219),
-    cementless = rgamma(iter, shape = 123.206, scale = 41.484) / (1 + discount)^3),
+    cementless = rgamma(iter, shape = 123.206, scale = 41.484) / (1 + discount)^3
+  ),
 
   # Dislocation outcomes from https://doi.org/10.1016/j.arth.2018.05.015
   # Turning costs from normal to gamma using https://doi.org/10.31219/osf.io/zf62e
@@ -78,7 +81,7 @@ generic <- list(
 
 
 # Transition probabilities
-# For values at or near 0, use an approximation: Beta(100, 100000) which is ~0.001
+# For values at or near 0, use an approximation based on the sample size
 transitions <- list(
 
   # Mortality rate
@@ -144,7 +147,7 @@ transitions <- list(
       HA_cemented = list(
         year1 = rbeta(iter, 5075.986, 313019.131),
         year2 = rbeta(iter, 5075.986, 313019.131),
-        year3 = rbeta(iter, 1, 10000),
+        year3 = 0,
         year4 = rbeta(iter, 563.999, 317531.351),
         year5 = rbeta(iter, 563.999, 317531.351)
       ),
@@ -158,15 +161,15 @@ transitions <- list(
       THA_cemented = list(
         year1 = rbeta(iter, 273.985, 18494.012),
         year2 = rbeta(iter, 273.985, 18494.012),
-        year3 = rbeta(iter, 1, 10000),
-        year4 = rbeta(iter, 1, 10000),
-        year5 = rbeta(iter, 1, 10000)
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 23634.966, 640589.075),
         year2 = rbeta(iter, 5704.987, 658518.522),
         year3 = rbeta(iter, 4074.996, 660149.290),
-        year4 = rbeta(iter, 10, 10000),
+        year4 = 0,
         year5 = rbeta(iter, 815.001, 663410.394)
       )
     ),
@@ -188,16 +191,16 @@ transitions <- list(
       THA_cemented = list(
         year1 = rbeta(iter, 337.988, 28222.012),
         year2 = rbeta(iter, 168.994, 28391.005),
-        year3 = rbeta(iter, 10, 10000),
-        year4 = rbeta(iter, 10, 10000),
-        year5 = rbeta(iter, 10, 10000)
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 12330.968, 408868.938),
         year2 = rbeta(iter, 2595.996, 418604.316),
         year3 = rbeta(iter, 648.999, 420551.455),
-        year4 = rbeta(iter, 10, 10000),
-        year5 = rbeta(iter, 10, 10000)
+        year4 = 0,
+        year5 = 0
       )
     ),
     age_85 = list(
@@ -205,8 +208,8 @@ transitions <- list(
         year1 = rbeta(iter, 88725.094, 5086905.419),
         year2 = rbeta(iter, 15924.979, 5159693.058),
         year3 = rbeta(iter, 6825.013, 5168809.894),
-        year4 = rbeta(iter, 10, 10000),
-        year5 = rbeta(iter, 10, 10000)
+        year4 = 0,
+        year5 = 0
       ),
       HA_cementless = list(
         year1 = rbeta(iter, 103550.019, 4185491.760),
@@ -217,17 +220,17 @@ transitions <- list(
       ),
       THA_cemented = list(
         year1 = rbeta(iter, 130.992, 17029.006),
-        year2 = rbeta(iter, 10, 10000),
-        year3 = rbeta(iter, 10, 10000),
-        year4 = rbeta(iter, 10, 10000),
-        year5 = rbeta(iter, 10, 10000)
+        year2 = 0,
+        year3 = 0,
+        year4 = 0,
+        year5 = 0
       ),
       THA_cementless = list(
-        year1 = rbeta(iter, 10, 10000),
+        year1 = 0,
         year2 = rbeta(iter, 254.996, 64768.979),
         year3 = rbeta(iter, 509.992, 64514.013),
-        year4 = rbeta(iter, 10, 10000),
-        year5 = rbeta(iter, 10, 10000)
+        year4 = 0,
+        year5 = 0
       )
     )
   )
@@ -288,7 +291,6 @@ utilities <- list(
 
 costs <- list(
 
-  # ALL COSTS UPDATED
   # Starting costs of surgery (no discounting required):
   # cost of procedure alone +
   # cost of additional cementing time +
