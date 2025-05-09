@@ -50,6 +50,7 @@ generic <- list(
   cost_cementless = (type_surg[, 2] * 53 + type_surg[, 3] * 53 * 2) / (1 + discount)^1, # cost of cementless screws, 2024
 
   # HA is a weighted average, 65% bipolar, 35% monopolar, based on expert advice from AJRR
+  # Assume prosthesis cost is roughly similar between cemented/cementless parts for HA
   cost_HA_prosthesis = (0.65 * rnorm(iter, mean = 2390.5, sd = 262.246) + # Bipolar
     0.35 * rnorm(iter, mean = 1658.5, sd = 129.085)) / (1 + discount)^1, # Monopolar
 
@@ -64,14 +65,16 @@ generic <- list(
   # Study data is from 2018 so bring it up to $2019
   cost_dislocation_1year = rgamma(iter, shape = 9.553, scale = 1819.097) * (1 + discount),
 
-  # Dislocation rates from original study
+  # Dislocation rates from: 
+  # 10.3389/fmed.2023.1085485 (HA)
+  # 10.1016/j.arth.2021.06.029 (THA)
   dislocation_rate = list(
-    HA_cemented = rbeta(iter, 2, 67),
-    HA_cementless = rbeta(iter, 24, 280),
-    THA_cemented = rbeta(iter, 32, 1257),
-    THA_cementless = rbeta(iter, 15, 328)
+    HA_cemented = rbeta(iter, 252, 23270),
+    HA_cementless = rbeta(iter, 117, 8342),
+    THA_cemented = rbeta(iter, 33, 4035),
+    THA_cementless = rbeta(iter, 102, 11680)
   ),
-  dislocation_utility = rbeta(iter, 9.77, 15.95),
+  dislocation_utility = rbeta(iter, 9.77, 15.95), 
   revision_utility = rbeta(iter, 36.94, 68.59),
   stable_HA_cemented_utility_followup = rbeta(iter, 97.973, 50.471),
   stable_HA_cementless_utility_followup = rbeta(iter, 48.651, 35.230),
@@ -109,7 +112,7 @@ transitions <- list(
     )
   ),
 
-  # Dislocation rate using same approach as original paper
+  # Dislocation rate increment of 0.5% per year from 10.1007/s11999-011-1987-7
   dislocation = list(
     HA_cemented = list(
       year1 = generic$dislocation_rate$HA_cemented,
@@ -141,13 +144,13 @@ transitions <- list(
     )
   ),
 
-  # Revision rate
+  # Revision rate from AJRR data request
   revision = list(
     age_65 = list(
       HA_cemented = list(
         year1 = rbeta(iter, 5075.986, 313019.131),
         year2 = rbeta(iter, 5075.986, 313019.131),
-        year3 = 0,
+        year3 = (rbeta(iter, 5075.986, 313019.131) + rbeta(iter, 563.999, 317531.351))/2,
         year4 = rbeta(iter, 563.999, 317531.351),
         year5 = rbeta(iter, 563.999, 317531.351)
       ),
@@ -161,15 +164,15 @@ transitions <- list(
       THA_cemented = list(
         year1 = rbeta(iter, 273.985, 18494.012),
         year2 = rbeta(iter, 273.985, 18494.012),
-        year3 = 0,
-        year4 = 0,
-        year5 = 0
+        year3 = rbeta(iter, 0.1, 10000),
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 23634.966, 640589.075),
         year2 = rbeta(iter, 5704.987, 658518.522),
         year3 = rbeta(iter, 4074.996, 660149.290),
-        year4 = 0,
+        year4 = (rbeta(iter, 4074.996, 660149.290) + rbeta(iter, 815.001, 663410.394))/2,
         year5 = rbeta(iter, 815.001, 663410.394)
       )
     ),
@@ -191,16 +194,16 @@ transitions <- list(
       THA_cemented = list(
         year1 = rbeta(iter, 337.988, 28222.012),
         year2 = rbeta(iter, 168.994, 28391.005),
-        year3 = 0,
-        year4 = 0,
-        year5 = 0
+        year3 = rbeta(iter, 0.1, 10000),
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       ),
       THA_cementless = list(
         year1 = rbeta(iter, 12330.968, 408868.938),
         year2 = rbeta(iter, 2595.996, 418604.316),
         year3 = rbeta(iter, 648.999, 420551.455),
-        year4 = 0,
-        year5 = 0
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       )
     ),
     age_85 = list(
@@ -208,8 +211,8 @@ transitions <- list(
         year1 = rbeta(iter, 88725.094, 5086905.419),
         year2 = rbeta(iter, 15924.979, 5159693.058),
         year3 = rbeta(iter, 6825.013, 5168809.894),
-        year4 = 0,
-        year5 = 0
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       ),
       HA_cementless = list(
         year1 = rbeta(iter, 103550.019, 4185491.760),
@@ -220,17 +223,17 @@ transitions <- list(
       ),
       THA_cemented = list(
         year1 = rbeta(iter, 130.992, 17029.006),
-        year2 = 0,
-        year3 = 0,
-        year4 = 0,
-        year5 = 0
+        year2 = rbeta(iter, 0.1, 10000),
+        year3 = rbeta(iter, 0.1, 10000),
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       ),
       THA_cementless = list(
-        year1 = 0,
+        year1 = rbeta(iter, 0.1, 10000),
         year2 = rbeta(iter, 254.996, 64768.979),
         year3 = rbeta(iter, 509.992, 64514.013),
-        year4 = 0,
-        year5 = 0
+        year4 = rbeta(iter, 0.1, 10000),
+        year5 = rbeta(iter, 0.1, 10000)
       )
     )
   )

@@ -14,11 +14,6 @@ library(patchwork)
 library(gridExtra)
 library(knitr)
 library(tidyverse)
-
-# Model inputs
-iter <- 50000 # define number of iterations
-discount <- 0.03 # define discount rate
-WTP <- 100000 # US WTP threshold
 ```
 
 The basic structure of this population-based model is as follows:  
@@ -43,8 +38,6 @@ models <- rbind(
   model_75_84,
   model_85_plus
 )
-
-head(models)
 ```
 
 Results from the models are calculated as the mean difference between strategies compared to baseline. We can also see how many of these simulations are cost-saving (costs < 0), QALY-gaining (QALYs > 0) and cost-effective
@@ -54,18 +47,30 @@ Results from the models are calculated as the mean difference between strategies
 analysis <- models |>
   group_by(Strategy, Prosthesis, Age) |>
   summarise(
-    Total_Cost_5y = mean(Costs),
+    Total_Cost_5y = median(Costs),
     Total_Cost_5y_low = quantile(Costs, 0.025),
     Total_Cost_5y_high = quantile(Costs, 0.975),
-    Total_QALY_5y = mean(QALYs),
+    Total_QALY_5y = median(QALYs),
     Total_QALY_5y_low = quantile(QALYs, 0.025),
     Total_QALY_5y_high = quantile(QALYs, 0.975),
     Pct_Cost_Saving = sum(Costs < 0) / iter,
     Pct_QALY_Gaining = sum(QALYs > 0) / iter,
-    NMB = sum(mean(QALYs) * WTP - mean(Costs)),
+    NMB = sum(median(QALYs) * WTP - median(Costs)),
     Pct_Cost_Effective = sum((QALYs * WTP - Costs) > 0) / iter
   ) |>
   mutate(Total_Cost_5y = Total_Cost_5y * (1 + discount)^5) # Convert $2019 to $2024
+
+confidence <- models |>
+  mutate(NMB = QALYs * WTP - Costs,
+         iter = rep(1:50000, 12)) |>
+  group_by(Strategy, iter) |>
+  summarise(Cost_saving = sum(Costs),
+            QALY_gaining = sum(QALYs),
+            Cost_effective = sum(NMB)) |>
+  group_by(Strategy) |>
+  summarise(pct_cost_saving = mean(Cost_saving < 0),
+            pct_qaly_gaining = mean(QALY_gaining > 0),
+            pct_cost_effective = mean(Cost_effective > 0))
 
 total <- analysis |>
   group_by(Strategy) |>
@@ -75,52 +80,16 @@ total <- analysis |>
     Cost_high = sum(Total_Cost_5y_high),
     QALY = sum(Total_QALY_5y),
     QALY_low = sum(Total_QALY_5y_low),
-    QALY_high = sum(Total_QALY_5y_high)
+    QALY_high = sum(Total_QALY_5y_high),
+    PP_Cost = Cost/sum(unlist(prev)),
+    PP_Cost_low = Cost_low/sum(unlist(prev)),
+    PP_Cost_high = Cost_high/sum(unlist(prev)),
+    PP_QALY = sum(Total_QALY_5y)/sum(unlist(prev)),
+    PP_QALY_low = sum(Total_QALY_5y_low)/sum(unlist(prev)),
+    PP_QALY_high = sum(Total_QALY_5y_high)/sum(unlist(prev))
   )
 
-with(
-  subset(total, Strategy == "All patients receive cemented fixation"),
-  print(paste0(
-    "The overall annual savings to Medicare of switching to cemented fixation are $",
-    ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
-    " and ",
-    ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
-    " QALYs."
-  ))
-)
-
-with(
-  subset(total, Strategy == "All patients receive cemented fixation"),
-  print(paste0(
-    "The per-patient savings from cemented fixation are $",
-    ceiling(sum(Cost) / sum(unlist(prev))), " ($", ceiling(sum(Cost_low) / sum(unlist(prev))), ", $", ceiling(sum(Cost_high) / sum(unlist(prev))), ")",
-    " and ",
-    sum(QALY) / sum(unlist(prev)), " (", sum(QALY_low) / sum(unlist(prev)), ", ", sum(QALY_high) / sum(unlist(prev)), ")",
-    " QALYs."
-  ))
-)
-
-with(
-  subset(total, Strategy == "All patients receive cementless fixation"),
-  print(paste0(
-    "The overall annual cost to Medicare of switching to cementless fixation are $",
-    ceiling(sum(Cost)), " ($", ceiling(sum(Cost_low)), ", $", ceiling(sum(Cost_high)), ")",
-    " and ",
-    ceiling(sum(QALY)), " (", ceiling(sum(QALY_low)), ", ", ceiling(sum(QALY_high)), ")",
-    " QALYs."
-  ))
-)
-
-with(
-  subset(total, Strategy == "All patients receive cementless fixation"),
-  print(paste0(
-    "The per-patient costs from cementless fixation are $",
-    ceiling(sum(Cost) / sum(unlist(prev))), " ($", ceiling(sum(Cost_low) / sum(unlist(prev))), ", $", ceiling(sum(Cost_high) / sum(unlist(prev))), ")",
-    " and ",
-    sum(QALY) / sum(unlist(prev)), " (", sum(QALY_low) / sum(unlist(prev)), ", ", sum(QALY_high) / sum(unlist(prev)), ")",
-    " QALYs."
-  ))
-)
+all_medicare <- cbind(total[,1], total[,c(2:6)] / (sum(unlist(prev))/286861))
 
 write.csv(analysis, "./full_model.csv")
 ```
@@ -225,10 +194,10 @@ colours <- c("#EF7C00", "#003D7C")
 
 p_all +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
-  annotate("text", x = -5800, y = 60000000, label = "A") +
-  annotate("text", x = 5800, y = 60000000, label = "B") +
-  annotate("text", x = -5800, y = -60000000, label = "C") +
-  annotate("text", x = 5800, y = -60000000, label = "D") +
+  annotate("text", x = -2800, y = 15000000, label = "A") +
+  annotate("text", x = 2800, y = 15000000, label = "B") +
+  annotate("text", x = -2800, y = -15000000, label = "C") +
+  annotate("text", x = 2800, y = -15000000, label = "D") +
   geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -236,13 +205,13 @@ p_all +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
   scale_x_continuous(
-    limits = c(-6000, 6000),
-    breaks = seq(-6000, 6000, 3000)
+    limits = c(-3000, 3000),
+    breaks = seq(-3000, 3000, 1500)
   ) +
   scale_y_continuous(
     labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-    limits = c(-60000000, 60000000),
-    breaks = seq(-60000000, 60000000, 15000000)
+    limits = c(-12000000, 12000000),
+    breaks = seq(-12000000, 12000000, 4000000)
   ) +
   labs(
     x = "QALYs",
@@ -252,10 +221,10 @@ p_all +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   p_ha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
-  annotate("text", x = -1800, y = 28000000, label = "A") +
-  annotate("text", x = 1800, y = 28000000, label = "B") +
-  annotate("text", x = -1800, y = -28000000, label = "C") +
-  annotate("text", x = 1800, y = -28000000, label = "D") +
+  annotate("text", x = -1200, y = 4500000, label = "A") +
+  annotate("text", x = 1200, y = 4500000, label = "B") +
+  annotate("text", x = -1200, y = -4500000, label = "C") +
+  annotate("text", x = 1200, y = -4500000, label = "D") +
   geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -264,13 +233,13 @@ p_all +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
   scale_x_continuous(
-    limits = c(-2000, 2000),
-    breaks = seq(-2000, 2000, 1000)
+    limits = c(-1200, 1200),
+    breaks = seq(-1200, 1200, 600)
   ) +
   scale_y_continuous(
     labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-    limits = c(-30000000, 30000000),
-    breaks = seq(-30000000, 30000000, 15000000)
+    limits = c(-5000000, 5000000),
+    breaks = seq(-5000000, 5000000, 2500000)
   ) +
   labs(
     x = "QALYs",
@@ -280,10 +249,10 @@ p_all +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   p_tha +
   geom_point(aes(x = QALYs, y = Costs, colour = Strategy), alpha = 0.1) +
-  annotate("text", x = -140, y = 9000000, label = "A") +
-  annotate("text", x = 140, y = 9000000, label = "B") +
-  annotate("text", x = -140, y = -9000000, label = "C") +
-  annotate("text", x = 140, y = -9000000, label = "D") +
+  annotate("text", x = -40, y = 2800000, label = "A") +
+  annotate("text", x = 40, y = 2800000, label = "B") +
+  annotate("text", x = -40, y = -2800000, label = "C") +
+  annotate("text", x = 40, y = -2800000, label = "D") +
   geom_abline(intercept = 0, slope = WTP, linetype = "dashed") +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -292,13 +261,13 @@ p_all +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values = colours) +
   scale_x_continuous(
-    limits = c(-150, 150),
-    breaks = seq(-150, 150, 75)
+    limits = c(-40, 40),
+    breaks = seq(-40, 40, 20)
   ) +
   scale_y_continuous(
     labels = scales::unit_format(prefix = "$", unit = "M", scale = 1e-6),
-    limits = c(-10000000, 10000000),
-    breaks = seq(-10000000, 10000000, 5000000)
+    limits = c(-3000000, 3000000),
+    breaks = seq(-3000000, 3000000, 1000000)
   ) +
   labs(
     x = "QALYs",
@@ -306,7 +275,6 @@ p_all +
     title = "Total hip arthroplasty"
   ) +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
-  plot_annotation(title = "Cost-effectiveness of setting default stem fixation") +
   plot_layout(guides = "collect") &
   theme(legend.position = "bottom")
 

@@ -10,15 +10,15 @@ simulator <- function(n, agegroup, modelgroup) {
     df |>
       mutate(
         # Dislocation rate = Stable from last year * dislocation rate current year
-        Dislocation = ceiling(get(paste0("Stable_year", prev_year)) *
-          transitions$dislocation[[modelgroup]][[paste0("year", year)]]),
+        Dislocation = get(paste0("Stable_year", prev_year)) *
+          transitions$dislocation[[modelgroup]][[paste0("year", year)]],
         # Revision rate = Stable from last year * revision rate current year
-        Revision = ceiling(get(paste0("Stable_year", prev_year)) *
-          transitions$revision[[agegroup]][[modelgroup]][[paste0("year", year)]]),
+        Revision = get(paste0("Stable_year", prev_year)) *
+          transitions$revision[[agegroup]][[modelgroup]][[paste0("year", year)]],
         # Mortality rate = Stable + revisions + dislocations from last year * mortality rate current year
-        Death = ceiling((get(paste0("Stable_year", prev_year)) +
+        Death = (get(paste0("Stable_year", prev_year)) +
           get(paste0("Dislocation_year", prev_year)) +
-          get(paste0("Revision_year", prev_year))) *
+          get(paste0("Revision_year", prev_year)) *
           transitions$death[[agegroup]][[paste0("year", year)]])
       ) |>
       mutate(
@@ -56,9 +56,9 @@ simulator <- function(n, agegroup, modelgroup) {
     # Starting costs of surgery
     Cost_surgery = n * costs[[modelgroup]],
     # End of year 1: multiply by probabilities of dislocation, revision, and death
-    Dislocation_year1 = ceiling(n * transitions$dislocation[[modelgroup]]$year1),
-    Revision_year1 = ceiling(n * transitions$revision[[agegroup]][[modelgroup]]$year1),
-    Death_year1 = ceiling(n * transitions$death[[agegroup]]$year1)
+    Dislocation_year1 = n * transitions$dislocation[[modelgroup]]$year1,
+    Revision_year1 = n * transitions$revision[[agegroup]][[modelgroup]]$year1,
+    Death_year1 = n * transitions$death[[agegroup]]$year1
   ) |>
     mutate(
       # Stable at the end of year 1 = surgeries minus dislocations, revisions, and deaths
@@ -125,8 +125,8 @@ simulator <- function(n, agegroup, modelgroup) {
 modeller <- function(agegroup, arthroplasty, fixation) {
   tibble(
     Costs =
-      get(paste(fixation, agegroup, sep = "_"))[[arthroplasty]]$Costs_year5 -
-        (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$Costs_year5 +
+      get(paste(fixation, agegroup, sep = "_"))[[arthroplasty]]$Costs_year5 - # Take policy type
+        (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cemented_", agegroup)]]$Costs_year5 + # subtract (baseline cemented + baseline cementless)
           (get(paste0("baseline_", agegroup))[[paste0(arthroplasty, "_cementless_", agegroup)]]$Costs_year5)),
     QALYs =
       get(paste(fixation, agegroup, sep = "_"))[[arthroplasty]]$QALYs_year5 -
