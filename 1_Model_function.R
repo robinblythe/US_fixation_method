@@ -16,10 +16,9 @@ simulator <- function(n, agegroup, modelgroup) {
         Revision = get(paste0("Stable_year", prev_year)) *
           transitions$revision[[agegroup]][[modelgroup]][[paste0("year", year)]],
         # Mortality rate = Stable + revisions + dislocations from last year * mortality rate current year
-        Death = (get(paste0("Stable_year", prev_year)) +
-          get(paste0("Dislocation_year", prev_year)) +
-          get(paste0("Revision_year", prev_year)) *
-          transitions$death[[agegroup]][[paste0("year", year)]])
+        Death = (get(paste0("Stable_year", prev_year)) * transitions$death[[agegroup]][[paste0("year", year)]]) +
+          (get(paste0("Dislocation_year", prev_year)) * transitions$death[[agegroup]][[paste0("year", year)]]) +
+          (get(paste0("Revision_year", prev_year)) * transitions$death[[agegroup]][[paste0("year", year)]])
       ) |>
       mutate(
         # Stable = sum of last year's stable, dislocations, and revisions,
